@@ -152,4 +152,42 @@ describe('App Integration', () => {
             })
         })
     })
+    describe('Error Speech Feedback', () => {
+        it('plays mic permission message when STT is not-allowed', async () => {
+            render(<App />)
+
+            // Get the onError callback that App passed to useAudio
+            const useAudioOptions = vi.mocked(useAudio).mock.calls[0][0]
+
+            // Simulate STT error (not-allowed)
+            if (useAudioOptions?.onError) {
+                useAudioOptions.onError(new Error('not-allowed'))
+            }
+
+            await waitFor(() => {
+                expect(mockUseAudio.playText).toHaveBeenCalledWith(
+                    expect.stringContaining('マイクを許可してください'),
+                    1
+                )
+            })
+        })
+
+        it('plays retry message when Mistral API fails', async () => {
+            vi.mocked(mistralClient.chat).mockRejectedValue(new Error('Server error'))
+
+            render(<App />)
+
+            const useAudioOptions = vi.mocked(useAudio).mock.calls[0][0]
+            if (useAudioOptions?.onTranscript) {
+                useAudioOptions.onTranscript('Hi there')
+            }
+
+            await waitFor(() => {
+                expect(mockUseAudio.playText).toHaveBeenCalledWith(
+                    expect.stringContaining('もう一度話しかけて'),
+                    1
+                )
+            })
+        })
+    })
 })

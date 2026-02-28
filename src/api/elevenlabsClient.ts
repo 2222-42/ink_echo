@@ -1,5 +1,15 @@
 import type { TTSSpeakRequest, ApiResponse } from './types'
 
+/**
+ * Returns ElevenLabs voice stability/style params based on conversation turn.
+ * Turn 1-4: calm, Turn 5-6: warming up, Turn 7+: emotional climax
+ */
+export function getToneParams(turn: number): { stability: number; style: number } {
+  if (turn >= 7) return { stability: 0.45, style: 0.55 }
+  if (turn >= 5) return { stability: 0.55, style: 0.45 }
+  return { stability: 0.7, style: 0.3 }
+}
+
 class ElevenLabsClient {
   private baseUrl: string
 
@@ -30,10 +40,12 @@ class ElevenLabsClient {
   }
 
   /**
-   * Play audio directly in browser
+   * Play audio directly in browser.
+   * Automatically derives tone params from turn number.
    */
   async playAudio(text: string, turn: number = 1): Promise<void> {
-    const audioBlob = await this.speak({ text, turn })
+    const toneParams = getToneParams(turn)
+    const audioBlob = await this.speak({ text, turn, ...toneParams })
 
     // Create audio object and play
     const audio = new Audio(URL.createObjectURL(audioBlob))
