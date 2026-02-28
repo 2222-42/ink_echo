@@ -47,12 +47,14 @@ Vision API失敗時のフォールバック動作を制御します。
 
 **設定方法**:
 ```bash
-# 環境変数として設定
-ENABLE_VISION_FALLBACK=true
-
-# または Vite プレフィックス付き
+# クライアントサイド (Vite) - VITE_ プレフィックスが必須
 VITE_ENABLE_VISION_FALLBACK=true
+
+# サーバーサイド (Vercel Functions)
+ENABLE_VISION_FALLBACK=true
 ```
+
+**重要**: クライアントサイドのコードで使用する環境変数は、Viteの仕様により `VITE_` プレフィックスが必須です。
 
 **動作**:
 - **OFF（デフォルト）**: Vision API失敗時に正直なエラーメッセージを表示し、再アップロードを促す

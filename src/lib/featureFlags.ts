@@ -16,22 +16,11 @@ export interface FeatureFlags {
 
 /**
  * Get feature flag value from environment or default
+ * Uses Vite's import.meta.env for environment variable access
  */
 function getFeatureFlag(flagName: keyof FeatureFlags): boolean {
-  // Check environment variable (for server-side)
-  // Use globalThis to avoid TypeScript errors about process not being defined
-  if (typeof globalThis !== 'undefined' && 'process' in globalThis) {
-    const globalObj = globalThis as unknown as { process?: { env?: Record<string, string> } }
-    const processEnv = globalObj.process?.env
-    if (processEnv) {
-      const envValue = processEnv[`VITE_${flagName}`] || processEnv[flagName]
-      if (envValue !== undefined) {
-        return envValue === 'true' || envValue === '1'
-      }
-    }
-  }
-
-  // Check import.meta.env (for client-side with Vite)
+  // Check import.meta.env (Vite's way of accessing environment variables)
+  // Environment variables must be prefixed with VITE_ to be exposed to client-side code
   if (typeof import.meta !== 'undefined' && import.meta.env) {
     const envValue = import.meta.env[`VITE_${flagName}`]
     if (envValue !== undefined) {
