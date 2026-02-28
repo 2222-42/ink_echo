@@ -86,6 +86,12 @@ export const HONEST_ERROR_MESSAGE_EN =
   "Sorry, I couldn't read the handwriting clearly. Could you try writing it again more clearly and take another photo? Or maybe try a different angle?"
 
 /**
+ * Short error message for UI display
+ */
+export const HONEST_ERROR_UI_JA = "画像の解析に失敗しました。もう一度アップロードしてください。"
+export const HONEST_ERROR_UI_EN = "Failed to analyze the image. Please try uploading again."
+
+/**
  * Get honest error message based on conversation language
  */
 export function getHonestErrorMessage(history: Message[]): string {
@@ -94,4 +100,15 @@ export function getHonestErrorMessage(history: Message[]): string {
   )
   
   return isJapanese ? HONEST_ERROR_MESSAGE_JA : HONEST_ERROR_MESSAGE_EN
+}
+
+/**
+ * Get short honest error message for UI display
+ */
+export function getHonestErrorUIMessage(history: Message[]): string {
+  const isJapanese = history.some(msg => 
+    /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(msg.content)
+  )
+  
+  return isJapanese ? HONEST_ERROR_UI_JA : HONEST_ERROR_UI_EN
 }

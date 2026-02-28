@@ -7,7 +7,7 @@ import { ConversationLog } from './components/ConversationLog'
 import { EndMessageOverlay } from './components/EndMessageOverlay'
 import { UploadArea } from './components/UploadArea'
 import { isFeatureEnabled } from './lib/featureFlags'
-import { getHonestErrorMessage } from '../api/mistral/fallback'
+import { getHonestErrorMessage, getHonestErrorUIMessage } from '../api/mistral/fallback'
 import './App.css'
 
 function App() {
@@ -91,12 +91,15 @@ function App() {
         
         if (!useFallback) {
           // Default behavior: Show honest error message and prompt retry
-          const honestError = getHonestErrorMessage(history)
-          setErrorMessage('Failed to analyze the image. Please try uploading again.')
+          const honestErrorAudio = getHonestErrorMessage(history)
+          const honestErrorUI = getHonestErrorUIMessage(history)
+          
+          // Set UI error message
+          setErrorMessage(honestErrorUI)
           
           // Play audio feedback with honest error message
           try {
-            await playText(honestError, 1)
+            await playText(honestErrorAudio, 1)
           } catch (audioError) {
             console.error('Failed to play error message:', audioError)
           }

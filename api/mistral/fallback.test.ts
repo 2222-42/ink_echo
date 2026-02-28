@@ -2,8 +2,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { 
   generateFallbackText, 
   getHonestErrorMessage,
+  getHonestErrorUIMessage,
   HONEST_ERROR_MESSAGE_JA,
-  HONEST_ERROR_MESSAGE_EN
+  HONEST_ERROR_MESSAGE_EN,
+  HONEST_ERROR_UI_JA,
+  HONEST_ERROR_UI_EN
 } from './fallback'
 
 describe('Fallback Text Generator', () => {
@@ -84,6 +87,27 @@ describe('Fallback Text Generator', () => {
     const errorMessage = getHonestErrorMessage(history)
     
     expect(errorMessage).toBe(HONEST_ERROR_MESSAGE_EN)
+  })
+
+  it('should get UI error message in Japanese', () => {
+    const history = [
+      { role: 'user' as const, content: 'こんにちは' },
+    ]
+
+    const errorMessage = getHonestErrorUIMessage(history)
+    
+    expect(errorMessage).toBe(HONEST_ERROR_UI_JA)
+    expect(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(errorMessage)).toBe(true)
+  })
+
+  it('should get UI error message in English', () => {
+    const history = [
+      { role: 'user' as const, content: 'Hello' },
+    ]
+
+    const errorMessage = getHonestErrorUIMessage(history)
+    
+    expect(errorMessage).toBe(HONEST_ERROR_UI_EN)
   })
 
   it('should not make deep interpretations in fallback text', () => {
