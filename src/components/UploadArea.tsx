@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { UploadCloud, X } from 'lucide-react';
 
 export interface UploadAreaProps {
@@ -8,6 +8,7 @@ export interface UploadAreaProps {
 export const UploadArea: React.FC<UploadAreaProps> = ({ onImageSelect }) => {
     const [dragActive, setDragActive] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const handleDrag = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -55,6 +56,9 @@ export const UploadArea: React.FC<UploadAreaProps> = ({ onImageSelect }) => {
     const handleClear = () => {
         setPreviewUrl(null);
         onImageSelect(null);
+        if (inputRef.current) {
+            inputRef.current.value = '';
+        }
     };
 
     return (
@@ -87,6 +91,7 @@ export const UploadArea: React.FC<UploadAreaProps> = ({ onImageSelect }) => {
                     onDrop={handleDrop}
                 >
                     <input
+                        ref={inputRef}
                         type="file"
                         accept="image/*"
                         onChange={handleChange}
