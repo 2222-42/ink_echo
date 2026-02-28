@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { withCors, withErrorHandling, withRequestValidation } from '../middleware.js'
+import { withCors, withErrorHandling, withRequestValidation, withTracing } from '../middleware.js'
 import { API_CONFIG, type ApiResponse } from '../config.js'
 import { getSystemPrompt } from './prompts.js'
 
@@ -110,4 +110,4 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-export default withCors(withErrorHandling(withRequestValidation(handler)))
+export default withTracing(withCors(withErrorHandling(withRequestValidation(handler))))

@@ -38,6 +38,7 @@ class MockSpeechRecognition {
 
 describe('useAudio', () => {
     beforeEach(() => {
+        mockInstances = [] // Add this line to clear instances
         vi.clearAllMocks()
         vi.stubGlobal('SpeechRecognition', MockSpeechRecognition)
         vi.stubGlobal('webkitSpeechRecognition', MockSpeechRecognition)
@@ -308,7 +309,9 @@ describe('useAudio', () => {
         for (let i = 0; i < 3; i++) {
             act(() => {
                 recognition.onerror({ error: 'network' } as any)
-                vi.advanceTimersByTime(1100)
+            })
+            act(() => {
+                vi.runOnlyPendingTimers()
             })
         }
 
@@ -319,9 +322,6 @@ describe('useAudio', () => {
         // Trigger the 4th consecutive network error
         act(() => {
             recognition.onerror({ error: 'network' } as any)
-        })
-        act(() => {
-            vi.advanceTimersByTime(1100)
         })
 
         // Now it SHOULD have bailed out

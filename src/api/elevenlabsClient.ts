@@ -1,4 +1,5 @@
 import type { TTSSpeakRequest, ApiResponse } from './types'
+import { traceLogger, generateTraceId } from '../lib/tracing'
 
 /**
  * Returns ElevenLabs voice stability/style params based on conversation turn.
@@ -22,21 +23,35 @@ class ElevenLabsClient {
    * Returns audio blob for playback
    */
   async speak(request: TTSSpeakRequest): Promise<Blob> {
-    const response = await fetch(`${this.baseUrl}/tts`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    })
+    const traceId = generateTraceId()
+    const startTime = Date.now()
 
-    if (!response.ok) {
-      const errorData: ApiResponse<never> = await response.json().catch(() => ({ success: false as const, error: '' }))
-      throw new Error(!errorData.success ? errorData.error : 'Failed to generate speech')
+    traceLogger.startTrace(traceId, 'POST', `${this.baseUrl}/tts`)
+
+    try {
+      const response = await fetch(`${this.baseUrl}/tts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      })
+
+      const durationMs = Date.now() - startTime
+      const status = response.ok ? 'success' : 'error'
+      traceLogger.endTrace(traceId, status, durationMs)
+
+      if (!response.ok) {
+        const errorData: ApiResponse<never> = await response.json().catch(() => ({ success: false as const, error: '' }))
+        throw new Error(!errorData.success ? errorData.error : 'Failed to generate speech')
+      }
+
+      // Get the audio blob from the response
+      return await response.blob()
+    } catch (error) {
+      traceLogger.error(traceId, error as Error)
+      throw error
     }
-
-    // Get the audio blob from the response
-    return await response.blob()
   }
 
   /**
