@@ -1,9 +1,9 @@
-import type { 
-  ChatRequest, 
-  ChatResponse, 
-  VisionRequest, 
-  VisionResponse, 
-  ApiResponse 
+import type {
+  ChatRequest,
+  ChatResponse,
+  VisionRequest,
+  VisionResponse,
+  ApiResponse
 } from './types'
 
 class MistralClient {
@@ -29,7 +29,7 @@ class MistralClient {
     const data: ApiResponse<ChatResponse> = await response.json()
 
     if (!response.ok || !data.success) {
-      throw new Error(data.error || 'Failed to get chat response')
+      throw new Error(!data.success ? data.error : 'Failed to get chat response')
     }
 
     return data.data
@@ -51,7 +51,7 @@ class MistralClient {
     const data: ApiResponse<VisionResponse> = await response.json()
 
     if (!response.ok || !data.success) {
-      throw new Error(data.error || 'Failed to analyze image')
+      throw new Error(!data.success ? data.error : 'Failed to analyze image')
     }
 
     return data.data

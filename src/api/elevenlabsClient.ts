@@ -21,8 +21,8 @@ class ElevenLabsClient {
     })
 
     if (!response.ok) {
-      const errorData: ApiResponse<never> = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || 'Failed to generate speech')
+      const errorData: ApiResponse<never> = await response.json().catch(() => ({ success: false as const, error: '' }))
+      throw new Error(!errorData.success ? errorData.error : 'Failed to generate speech')
     }
 
     // Get the audio blob from the response
@@ -34,11 +34,11 @@ class ElevenLabsClient {
    */
   async playAudio(text: string, turn: number = 1): Promise<void> {
     const audioBlob = await this.speak({ text, turn })
-    
+
     // Create audio object and play
     const audio = new Audio(URL.createObjectURL(audioBlob))
     await audio.play()
-    
+
     // Clean up
     setTimeout(() => URL.revokeObjectURL(audio.src), 1000)
   }

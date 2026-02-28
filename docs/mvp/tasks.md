@@ -97,12 +97,18 @@
 **依存関係**: Track 1, 2, 4 の実装完了後 (Track 3 のデプロイ済み環境または十分なモック)
 **目的**: 全てのフック、コンポーネント、API通信層を結合し、実際のアプリケーションとしてのフローを完成させる
 
-- [ ] **Task 5.1**: 通常ターンフローの結合 (UI + Logic + API)
+- [x] **Task 5.1**: 通常ターンフローの結合 (UI + Logic + API)
   - 要求事項: `integration/normal_turn.spec.md` で受入テスト仕様を作成。`App.tsx` 上で「MicButton押下 -> 録音・STT -> Mistral API呼出 -> TTS再生 -> ターン数・履歴保存」の一連のフローを繋ぎ込む。
-- [ ] **Task 5.2**: 7ターン目強制終了フローの結合
+  - 実装完了: `src/App.tsx`, `src/App.test.tsx`, `docs/mvp/integration/normal_turn.spec.md`
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
+- [x] **Task 5.2**: 7ターン目強制終了フローの結合
   - 要求事項: `integration/end_turn.spec.md` に受入テスト仕様を作成。7ターン到達時に `EndMessageOverlay` を表示、MicButtonを無効化し、アップロードUIを表示させる。
-- [ ] **Task 5.3**: 画像アップロード・再開フローの結合
+  - 実装完了: `src/App.tsx`, `docs/mvp/integration/end_turn.spec.md`
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
+- [x] **Task 5.3**: 画像アップロード・再開フローの結合
   - 要求事項: `integration/upload_resume.spec.md` に受入テスト仕様を作成。アップロード画像を `Mistral Vision API` に送り、肯定的なフィードバックを音声で返しつつ対話を再開するフローを結合する。
+  - 実装完了: `src/App.tsx`, `docs/mvp/integration/upload_resume.spec.md`
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
 
 ---
 

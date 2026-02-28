@@ -274,3 +274,35 @@ The backend API foundation is complete and ready for:
 - Error handling is consistent across all endpoints
 - Middleware provides reusable functionality (CORS, validation, error handling)
 - Ready for production deployment with proper API keys configured
+
+## 2026-02-28T14:59:32+09:00
+File: src/App.tsx
+Phase: RED
+Tests run: 3
+Failed: 3 (Integration Normal Turn & End Turn)
+Overall: FAIL → fix required
+
+
+## 2026-02-28T15:11:12+09:00
+File: src/App.tsx
+Phase: GREEN
+Tests run: 3
+Failed: 0
+Overall: PASS → ready for next
+
+
+## 2026-02-28T15:18:32+09:00
+File: src/App.tsx (Track 5 Full Integration)
+Phase: GREEN
+Tests run: 4
+Failed: 0
+Overall: PASS → ready for next
+
+
+## 2026-02-28T15:47:25+09:00
+File: src/hooks/useAudio.ts (Fix 1: final-only onTranscript), src/App.tsx (Fix 2: loading/error, Fix 3: UI layout, Fix 4: null guard)
+Phase: GREEN
+Tests run: 4
+Failed: 0
+Overall: PASS → ready for next
+
