@@ -14,6 +14,15 @@ export interface FeatureFlags {
   ENABLE_VISION_FALLBACK: boolean
 }
 
+export interface AppConfig {
+  /**
+   * Maximum number of turns in a conversation session
+   * Default: 7
+   * Can be overridden via VITE_MAX_TURNS environment variable
+   */
+  MAX_TURNS: number
+}
+
 /**
  * Get feature flag value from environment or default
  * Uses Vite's import.meta.env for environment variable access
@@ -41,6 +50,14 @@ const DEFAULT_FLAGS: FeatureFlags = {
 }
 
 /**
+ * Default application configuration values
+ * These are used when no environment variable is set
+ */
+const DEFAULT_CONFIG: AppConfig = {
+  MAX_TURNS: 7, // Default: 7 turns before session ends
+}
+
+/**
  * Get all feature flags
  */
 export function getFeatureFlags(): FeatureFlags {
@@ -54,4 +71,39 @@ export function getFeatureFlags(): FeatureFlags {
  */
 export function isFeatureEnabled(flagName: keyof FeatureFlags): boolean {
   return getFeatureFlag(flagName)
+}
+
+/**
+ * Get configuration value from environment or default
+ */
+function getConfigValue(configName: keyof AppConfig): number {
+  // Check import.meta.env (Vite's way of accessing environment variables)
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    const envValue = import.meta.env[`VITE_${configName}`]
+    if (envValue !== undefined) {
+      const parsed = parseInt(envValue, 10)
+      if (!isNaN(parsed) && parsed > 0) {
+        return parsed
+      }
+    }
+  }
+
+  // Default values
+  return DEFAULT_CONFIG[configName]
+}
+
+/**
+ * Get application configuration
+ */
+export function getAppConfig(): AppConfig {
+  return {
+    MAX_TURNS: getConfigValue('MAX_TURNS'),
+  }
+}
+
+/**
+ * Get the maximum number of turns allowed in a conversation session
+ */
+export function getMaxTurns(): number {
+  return getConfigValue('MAX_TURNS')
 }

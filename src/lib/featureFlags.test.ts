@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getFeatureFlags, isFeatureEnabled } from './featureFlags'
+import { getFeatureFlags, isFeatureEnabled, getAppConfig, getMaxTurns } from './featureFlags'
 
 describe('Feature Flags', () => {
   it('should return default flags when no env variables are set', () => {
@@ -26,6 +26,35 @@ describe('Feature Flags', () => {
     // Should return boolean value
     const result = isFeatureEnabled('ENABLE_VISION_FALLBACK')
     expect(typeof result).toBe('boolean')
+  })
+})
+
+describe('App Configuration', () => {
+  it('should return default config when no env variables are set', () => {
+    const config = getAppConfig()
+    
+    // Default should be 7
+    expect(config.MAX_TURNS).toBe(7)
+  })
+
+  it('should return default max turns of 7', () => {
+    // Without environment variables, should default to 7
+    expect(getMaxTurns()).toBe(7)
+  })
+
+  it('should have correct default values', () => {
+    const config = getAppConfig()
+    
+    // Verify all config values have expected defaults
+    expect(typeof config.MAX_TURNS).toBe('number')
+    expect(config.MAX_TURNS).toBe(7)
+    expect(config.MAX_TURNS).toBeGreaterThan(0)
+  })
+
+  it('should return a positive number for max turns', () => {
+    const maxTurns = getMaxTurns()
+    expect(typeof maxTurns).toBe('number')
+    expect(maxTurns).toBeGreaterThan(0)
   })
 })
 

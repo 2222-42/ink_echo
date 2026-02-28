@@ -6,7 +6,7 @@ import { MicButton } from './components/MicButton'
 import { ConversationLog } from './components/ConversationLog'
 import { EndMessageOverlay } from './components/EndMessageOverlay'
 import { UploadArea } from './components/UploadArea'
-import { isFeatureEnabled } from './lib/featureFlags'
+import { isFeatureEnabled, getMaxTurns } from './lib/featureFlags'
 import { getHonestErrorMessage, getHonestErrorUIMessage } from '../api/mistral/fallback'
 import './App.css'
 
@@ -163,7 +163,7 @@ function App() {
       {/* Session ended overlay */}
       <EndMessageOverlay
         isVisible={isSessionEnded}
-        message="Your 7 turns are complete. Please upload a photo of your handwritten reflection."
+        message={`Your ${getMaxTurns()} turns are complete. Please upload a photo of your handwritten reflection.`}
         onRestart={startUploadMode}
       />
 

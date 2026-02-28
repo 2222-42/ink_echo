@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { localStorageImpl } from '../lib/storage';
+import { getMaxTurns } from '../lib/featureFlags';
 import type { ConversationState, Message } from '../types/conversation';
 
 const SESSION_KEY = 'ink-echo-session';
@@ -54,8 +55,9 @@ export const useConversation = () => {
             // Increment turn only when assistant replies
             const newTurns = role === 'assistant' ? prevState.turns + 1 : prevState.turns;
 
-            // Session ends at 7 turns
-            const newIsSessionEnded = newTurns >= 7;
+            // Session ends when max turns is reached
+            const maxTurns = getMaxTurns();
+            const newIsSessionEnded = newTurns >= maxTurns;
 
             return {
                 ...prevState,

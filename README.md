@@ -40,6 +40,25 @@ Ink Echo (インクエコー)
 
 ## Feature Flags（機能フラグ）
 
+### MAX_TURNS
+会話のターン数を設定します。デモやピッチのために短縮することができます。
+
+**デフォルト値**: `7` （7ターン）
+
+**設定方法**:
+```bash
+# クライアントサイド (Vite) - VITE_ プレフィックスが必須
+VITE_MAX_TURNS=4
+```
+
+**用途**:
+- **デモ・ピッチ用**: 5分以内でデモを完了するために、ターン数を4に設定
+- **通常版**: デフォルトの7ターンで深い対話を実現
+
+**実装位置**:
+- 設定管理: `/src/lib/featureFlags.ts`
+- 使用箇所: `/src/hooks/useConversation.ts`, `/src/App.tsx`
+
 ### ENABLE_VISION_FALLBACK
 Vision API失敗時のフォールバック動作を制御します。
 

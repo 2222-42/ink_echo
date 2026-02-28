@@ -2,6 +2,7 @@ import { renderHook, act } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { useConversation } from './useConversation'
 import { localStorageImpl } from '../lib/storage'
+import { getMaxTurns } from '../lib/featureFlags'
 
 describe('useConversation', () => {
     beforeEach(() => {
@@ -74,10 +75,12 @@ describe('useConversation', () => {
         expect(result.current.turns).toBe(1)
     })
 
-    it('sets isSessionEnded to true when turns reach 7 (after assistant message)', () => {
+    it('sets isSessionEnded to true when turns reach max turns (after assistant message)', () => {
+        const maxTurns = getMaxTurns()
+        
         vi.spyOn(localStorageImpl, 'getSession').mockReturnValue({
             id: 'mock-id',
-            turns: 6,
+            turns: maxTurns - 1,
             history: [],
             isSessionEnded: false,
             isWaitingVision: false
@@ -86,21 +89,23 @@ describe('useConversation', () => {
         const { result } = renderHook(() => useConversation())
 
         expect(result.current.isSessionEnded).toBe(false)
-        expect(result.current.turns).toBe(6)
+        expect(result.current.turns).toBe(maxTurns - 1)
 
         act(() => {
             result.current.addMessage('user', 'final message')
             result.current.addMessage('assistant', 'final response')
         })
 
-        expect(result.current.turns).toBe(7)
+        expect(result.current.turns).toBe(maxTurns)
         expect(result.current.isSessionEnded).toBe(true)
     })
 
     it('resets session state when resumeSessionWithVision is called', () => {
+        const maxTurns = getMaxTurns()
+        
         vi.spyOn(localStorageImpl, 'getSession').mockReturnValue({
             id: 'mock-id',
-            turns: 7,
+            turns: maxTurns,
             history: [{ role: 'user', content: 'hello' }],
             isSessionEnded: true,
             isWaitingVision: true
@@ -123,9 +128,11 @@ describe('useConversation', () => {
     })
 
     it('transitions to upload mode when startUploadMode is called', () => {
+        const maxTurns = getMaxTurns()
+        
         vi.spyOn(localStorageImpl, 'getSession').mockReturnValue({
             id: 'mock-id',
-            turns: 7,
+            turns: maxTurns,
             history: [{ role: 'user', content: 'hello' }],
             isSessionEnded: true,
             isWaitingVision: false
@@ -142,6 +149,6 @@ describe('useConversation', () => {
 
         expect(result.current.isSessionEnded).toBe(false)
         expect(result.current.isWaitingVision).toBe(true)
-        expect(result.current.turns).toBe(7) // turns should not change
+        expect(result.current.turns).toBe(maxTurns) // turns should not change
     })
 })
