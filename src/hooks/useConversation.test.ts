@@ -3,21 +3,18 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { useConversation } from './useConversation'
 import { localStorageImpl } from '../lib/storage'
 
-// Mock crypto.randomUUID
-Object.defineProperty(globalThis, 'crypto', {
-    value: {
-        randomUUID: () => 'test-uuid-1234'
-    }
-})
-
 describe('useConversation', () => {
     beforeEach(() => {
+        vi.stubGlobal('crypto', {
+            randomUUID: () => 'test-uuid-1234'
+        } as unknown as Crypto)
         vi.spyOn(localStorageImpl, 'getSession').mockReturnValue(null)
         vi.spyOn(localStorageImpl, 'saveSession').mockImplementation(() => { })
     })
 
     afterEach(() => {
         vi.restoreAllMocks()
+        vi.unstubAllGlobals()
     })
 
     it('initializes with default values and generates a UUID on first load', () => {

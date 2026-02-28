@@ -39,10 +39,12 @@ describe('localStorageImpl', () => {
     });
 
     it('returns null if the data cannot be parsed', () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
         const id = 'test-session-invalid';
         localStorage.setItem(id, 'invalid-json-string');
 
         const retrieved = localStorageImpl.getSession(id);
         expect(retrieved).toBeNull();
+        expect(consoleErrorSpy).toHaveBeenCalled();
     });
 });
