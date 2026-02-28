@@ -83,12 +83,18 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     res.end()
   } catch (error) {
     console.error('TTS API Error:', error)
-    const errorResponse: ApiResponse<never> = {
-      error: error instanceof Error ? error.message : 'Failed to generate speech',
-      code: API_CONFIG.ERROR_CODES.API_ERROR,
-      success: false,
+    if (res.headersSent) {
+      if (!res.writableEnded) {
+        res.end()
+      }
+    } else {
+      const errorResponse: ApiResponse<never> = {
+        error: error instanceof Error ? error.message : 'Failed to generate speech',
+        code: API_CONFIG.ERROR_CODES.API_ERROR,
+        success: false,
+      }
+      res.status(500).json(errorResponse)
     }
-    res.status(500).json(errorResponse)
   }
 }
 

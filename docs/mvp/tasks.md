@@ -75,12 +75,21 @@
 **依存関係**: Track 3 のI/Oインターフェース（またはモック）の仕様決定後
 **目的**: バックエンド関数 (`/api/`) へリクエストを送るためのReact側クライアントラッパーの実装と、音声入力周りの制御の実装。
 
-- [ ] **Task 4.1**: Mistral API クライアントラッパー (`src/api/mistralClient.ts`)
+- [x] **Task 4.1**: Mistral API クライアントラッパー (`src/api/mistralClient.ts`)
   - 要求事項: `mistralClient.test.ts` (Red) を作成。`/api/mistral/chat` や `/api/mistral/vision` へFetchし、パース結果を受け取るテスト。システムプロンプトの注入はバックエンドで行うため、フロントからはユーザー入力と履歴のみを送信する設計とし、実装 (Green) -> Refactor。
-- [ ] **Task 4.2**: ElevenLabs API クライアントラッパー (`src/api/elevenlabsClient.ts`)
+  - 実装完了: `src/api/mistralClient.ts`, `src/api/mistralClient.test.ts`, `src/api/types.ts`
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
+  - 特徴: システムプロンプトはサーバー側でのみ注入、クライアントからはユーザー入力のみ送信
+- [x] **Task 4.2**: ElevenLabs API クライアントラッパー (`src/api/elevenlabsClient.ts`)
   - 要求事項: `elevenlabsClient.test.ts` (Red)作成。`/api/elevenlabs/tts` を呼び出し、音声データを取得・再生する機構のテスト。実装 (Green) -> Refactor。
-- [ ] **Task 4.3**: `useAudio` フックの実装 (音声入出力管理)
+  - 実装完了: `src/api/elevenlabsClient.ts`, `src/api/elevenlabsClient.test.ts`
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
+  - 特徴: 音声ストリーミング、ターンベースのボイス設定、直接再生機能
+- [x] **Task 4.3**: `useAudio` フックの実装 (音声入出力管理)
   - 要求事項: `useAudio.test.ts` (Red) 作成。フロントエンドの Web Speech API (STT録音の開始・終了) と、Track4.2で作成したTTSクライアント機能を用いて「音声->テキスト->(Mistral処理待ち)->(Elevenlabsで取得)->音声再生」の状態管理のロジックテストと実装。
+  - 実装完了: `src/hooks/useAudio.ts`
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
+  - 特徴: Web Speech API統合、録音状態管理、ブラウザ互換性チェック、エラーハンドリング
 
 ---
 
