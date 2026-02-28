@@ -2,7 +2,7 @@
 (Overall project concept, philosophy, and MVP goals)
 
 <div align="right">
-[日本語は下部にあります (Japanese version is below)](#japanese-version)
+日本語は下部にあります (Japanese version is below)
 </div>
 
 ## Project Name
@@ -122,7 +122,6 @@ ENABLE_VISION_FALLBACK=true
 
 ---
 
-<a id="japanese-version"></a>
 # 日本語版 (Japanese Version)
 
 # Ink Echo - Project Overview & Core Concept  
