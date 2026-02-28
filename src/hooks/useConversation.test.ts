@@ -121,4 +121,26 @@ describe('useConversation', () => {
         expect(result.current.history).toHaveLength(2)
         expect(result.current.history[1]).toEqual({ role: 'assistant', content: 'Great picture!' })
     })
+
+    it('sets isWaitingVision to true when startVisionUpload is called', () => {
+        vi.spyOn(localStorageImpl, 'getSession').mockReturnValue({
+            id: 'mock-id',
+            turns: 7,
+            history: [{ role: 'user', content: 'hello' }],
+            isSessionEnded: true,
+            isWaitingVision: false
+        })
+
+        const { result } = renderHook(() => useConversation())
+
+        expect(result.current.isWaitingVision).toBe(false)
+
+        act(() => {
+            result.current.startVisionUpload()
+        })
+
+        expect(result.current.isWaitingVision).toBe(true)
+        // isSessionEnded should remain true or at least not interrupt the UI flow
+        expect(result.current.isSessionEnded).toBe(true)
+    })
 })

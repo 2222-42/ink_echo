@@ -99,17 +99,37 @@ describe('App Integration', () => {
     })
 
     describe('End Turn Flow', () => {
-        it('shows EndMessageOverlay and UploadArea on 7th turn', () => {
+        it('shows EndMessageOverlay and then UploadArea when user clicks Upload Card button', () => {
             mockUseConversation.turns = 7
             mockUseConversation.isSessionEnded = true
 
-            render(<App />)
+            const { rerender } = render(<App />)
 
             // Should show end message
             expect(screen.getByText(/Your 7 turns are complete/)).toBeInTheDocument()
             // MicButton should be disabled
             const micButton = screen.getByRole('button', { name: /Start recording/i })
             expect(micButton).toBeDisabled()
+
+            // Upload button should be there
+            const uploadButton = screen.getByRole('button', { name: /Upload Card/i })
+            expect(uploadButton).toBeInTheDocument()
+
+            // UploadArea should not be there initially
+            expect(screen.queryByTestId('upload-input')).not.toBeInTheDocument()
+
+            // Click the upload card transition button
+            fireEvent.click(uploadButton)
+
+            // Simulate the state change triggered by startVisionUpload
+            mockUseConversation.isWaitingVision = true
+            rerender(<App />)
+
+            // Now UploadArea should be visible
+            expect(screen.getByTestId('upload-input')).toBeInTheDocument()
+
+            // EndMessageOverlay should be hidden
+            expect(screen.queryByText(/Your 7 turns are complete/)).not.toBeInTheDocument()
         })
     })
 
@@ -126,6 +146,14 @@ describe('App Integration', () => {
                 feedback: 'Great reflection!'
             })
 
+            render(<App />)
+
+            // Click the new transition button
+            const uploadButton = screen.getByRole('button', { name: /Upload Card/i })
+            fireEvent.click(uploadButton)
+
+            // Simulate the state change triggered by startVisionUpload
+            mockUseConversation.isWaitingVision = true
             render(<App />)
 
             const fileInput = screen.getByTestId('upload-input')

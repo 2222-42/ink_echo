@@ -83,9 +83,17 @@ export const useConversation = () => {
         });
     };
 
+    const startVisionUpload = () => {
+        setState((prevState) => ({
+            ...prevState,
+            isWaitingVision: true
+        }));
+    };
+
     return {
         ...state,
         addMessage,
-        resumeSessionWithVision
+        resumeSessionWithVision,
+        startVisionUpload
     };
 };

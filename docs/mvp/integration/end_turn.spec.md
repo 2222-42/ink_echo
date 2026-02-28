@@ -16,5 +16,7 @@ This specification covers the integration of the 7th turn end flow. When the con
    - A concluding message ("7ターンが終了しました。手書きの振り返りをアップロードしてください") is visually presented.
 
 3. **Upload UI Access:**
-   - Inside or alongside the `EndMessageOverlay`, the `UploadArea` component is visible, allowing the user to select or drag-and-drop an image file.
+   - The `EndMessageOverlay` displays an "Upload Card" button (formerly "Restart").
+   - Clicking the button sets `isWaitingVision` to `true`, hiding the overlay and displaying the `UploadArea`.
+   - The user can then select or drag-and-drop an image file.
    - The conversation log remains visible in the background for reference.

@@ -1,16 +1,16 @@
 import React from 'react';
-import { RefreshCw } from 'lucide-react';
+import { Upload } from 'lucide-react';
 
 export interface EndMessageOverlayProps {
     isVisible: boolean;
     message: string;
-    onRestart: () => void;
+    onUploadTransition: () => void;
 }
 
 export const EndMessageOverlay: React.FC<EndMessageOverlayProps> = ({
     isVisible,
     message,
-    onRestart,
+    onUploadTransition,
 }) => {
     if (!isVisible) return null;
 
@@ -25,12 +25,12 @@ export const EndMessageOverlay: React.FC<EndMessageOverlayProps> = ({
                 </p>
 
                 <button
-                    onClick={onRestart}
+                    onClick={onUploadTransition}
                     className="flex items-center justify-center space-x-2 w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-600/30"
-                    aria-label="Restart session"
+                    aria-label="Upload Card"
                 >
-                    <RefreshCw className="w-5 h-5" />
-                    <span>Restart</span>
+                    <Upload className="w-5 h-5" />
+                    <span>Upload Card</span>
                 </button>
             </div>
         </div>
