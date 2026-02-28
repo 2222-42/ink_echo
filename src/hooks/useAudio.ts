@@ -26,8 +26,8 @@ export function useAudio(options: UseAudioOptions = {}) {
     if (typeof window === 'undefined') return
 
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = 
-        (window as any).SpeechRecognition || 
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
         (window as any).webkitSpeechRecognition
 
       const recognition = new SpeechRecognition()
@@ -48,9 +48,13 @@ export function useAudio(options: UseAudioOptions = {}) {
           }
         }
 
-        const fullTranscript = finalTranscript || interimTranscript
-        setState(prev => ({ ...prev, transcript: fullTranscript }))
-        onTranscript?.(fullTranscript)
+        // Update display state for interim (for live display)
+        const displayTranscript = finalTranscript || interimTranscript
+        setState(prev => ({ ...prev, transcript: displayTranscript }))
+        // Only invoke onTranscript callback for FINAL results to avoid duplicate API calls
+        if (finalTranscript) {
+          onTranscript?.(finalTranscript.trim())
+        }
       }
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -133,15 +137,15 @@ export function useAudio(options: UseAudioOptions = {}) {
     isRecording: state.isRecording,
     isListening: state.isListening,
     transcript: state.transcript,
-    
+
     // Actions
     startRecording,
     stopRecording,
     playText,
-    
+
     // Utilities
     isSpeechRecognitionSupported,
-    
+
     // Getters
     getTranscript: () => state.transcript,
   }

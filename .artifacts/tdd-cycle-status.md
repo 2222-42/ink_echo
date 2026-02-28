@@ -298,3 +298,11 @@ Tests run: 4
 Failed: 0
 Overall: PASS → ready for next
 
+
+## 2026-02-28T15:47:25+09:00
+File: src/hooks/useAudio.ts (Fix 1: final-only onTranscript), src/App.tsx (Fix 2: loading/error, Fix 3: UI layout, Fix 4: null guard)
+Phase: GREEN
+Tests run: 4
+Failed: 0
+Overall: PASS → ready for next
+
