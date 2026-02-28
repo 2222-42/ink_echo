@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { API_CONFIG, type ApiErrorResponse } from './config.js'
+import { generateTraceId, logTrace, type TraceMetadata } from './tracing.js'
 import dns from 'node:dns'
 
 // Workaround for Node.js >= 18 fetch EAI_AGAIN local IPv6 issues
@@ -88,5 +89,61 @@ export function withRequestValidation(handler: (req: VercelRequest, res: VercelR
     }
 
     return handler(req, res)
+  }
+}
+
+// Middleware to trace API requests for W&B Weave integration
+export function withTracing(handler: (req: VercelRequest, res: VercelResponse) => void | Promise<void>) {
+  return async (req: VercelRequest, res: VercelResponse) => {
+    const traceId = generateTraceId()
+    const startTime = Date.now()
+    
+    // Add trace ID to request for downstream use
+    ;(req as any).traceId = traceId
+
+    // Log trace start
+    const startMetadata: TraceMetadata = {
+      traceId,
+      timestamp: new Date().toISOString(),
+      method: req.method,
+      path: req.url,
+    }
+    logTrace(startMetadata)
+
+    // Store original json method to intercept response
+    const originalJson = res.json.bind(res)
+    res.json = function (body: any) {
+      const durationMs = Date.now() - startTime
+      const endMetadata: TraceMetadata = {
+        traceId,
+        timestamp: new Date().toISOString(),
+        method: req.method,
+        path: req.url,
+        durationMs,
+        statusCode: res.statusCode,
+        metadata: {
+          success: body?.success,
+          hasError: !!body?.error,
+        },
+      }
+      logTrace(endMetadata)
+      return originalJson(body)
+    } as any
+
+    try {
+      await handler(req, res)
+    } catch (error) {
+      const durationMs = Date.now() - startTime
+      const errorMetadata: TraceMetadata = {
+        traceId,
+        timestamp: new Date().toISOString(),
+        method: req.method,
+        path: req.url,
+        durationMs,
+        error: error instanceof Error ? error.message : String(error),
+      }
+      logTrace(errorMetadata)
+      throw error
+    }
   }
 }
