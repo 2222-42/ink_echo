@@ -61,15 +61,23 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     })
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || 'Mistral API error')
+      const errorText = await response.text()
+      let errorData: any = {}
+      try {
+        errorData = JSON.parse(errorText)
+      } catch (e) {
+        // Ignored
+      }
+      console.error(`Mistral API Error Status: ${response.status}`, errorText)
+      const errorMessage = errorData.message || errorData.error || `Mistral API error (${response.status})`
+      throw new Error(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage))
     }
 
     const mistralData: MistralChatResponse = await response.json()
 
     // Extract the assistant's response
     const assistantMessage = mistralData.choices[0]?.message
-    
+
     if (!assistantMessage) {
       throw new Error('No response from Mistral API')
     }
