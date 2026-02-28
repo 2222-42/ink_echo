@@ -87,15 +87,22 @@ describe('Mistral Vision API', () => {
 
     global.fetch = mockFetch
     process.env.MISTRAL_API_KEY = 'test-key'
+    
+    // Capture the response data
+    let responseData: any
+    const originalJson = mockResponse.json
+    mockResponse.json = vi.fn((data: any) => {
+      responseData = data
+      return originalJson(data)
+    })
 
     await handler(mockRequest, mockResponse as any)
 
     // Check that the response contains parsed JSON data
-    const jsonCall = mockResponse.json.mock.calls[0][0]
-    expect(jsonCall.success).toBe(true)
-    expect(jsonCall.data).toHaveProperty('text')
-    expect(jsonCall.data).toHaveProperty('themes')
-    expect(jsonCall.data).toHaveProperty('keywords')
+    expect(responseData.success).toBe(true)
+    expect(responseData.data).toHaveProperty('text')
+    expect(responseData.data).toHaveProperty('themes')
+    expect(responseData.data).toHaveProperty('keywords')
 
     // Verify that the image was properly included in the request
     expect(mockFetch).toHaveBeenCalled()
@@ -132,6 +139,14 @@ describe('Mistral Vision API', () => {
 
     process.env.MISTRAL_API_KEY = 'test-key'
     process.env.ENABLE_VISION_FALLBACK = 'true'
+    
+    // Capture the response data
+    let responseData: any
+    const originalJson = mockResponse.json
+    mockResponse.json = vi.fn((data: any) => {
+      responseData = data
+      return originalJson(data)
+    })
 
     await handler(mockRequest, mockResponse as any)
 
@@ -139,11 +154,10 @@ describe('Mistral Vision API', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(200)
 
     // Check that response contains feedback field
-    const jsonCall = mockResponse.json.mock.calls[0][0]
-    expect(jsonCall.success).toBe(true)
-    expect(jsonCall.data).toHaveProperty('feedback')
-    expect(typeof jsonCall.data.feedback).toBe('string')
-    expect(jsonCall.data.feedback.length).toBeGreaterThan(0)
+    expect(responseData.success).toBe(true)
+    expect(responseData.data).toHaveProperty('feedback')
+    expect(typeof responseData.data.feedback).toBe('string')
+    expect(responseData.data.feedback.length).toBeGreaterThan(0)
 
     // Clean up
     delete process.env.ENABLE_VISION_FALLBACK
@@ -161,6 +175,14 @@ describe('Mistral Vision API', () => {
     process.env.MISTRAL_API_KEY = 'test-key'
     // Explicitly disable fallback
     delete process.env.ENABLE_VISION_FALLBACK
+    
+    // Capture the response data
+    let responseData: any
+    const originalJson = mockResponse.json
+    mockResponse.json = vi.fn((data: any) => {
+      responseData = data
+      return originalJson(data)
+    })
 
     await handler(mockRequest, mockResponse as any)
 
@@ -168,8 +190,7 @@ describe('Mistral Vision API', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(500)
 
     // Check that response is an error
-    const jsonCall = mockResponse.json.mock.calls[0][0]
-    expect(jsonCall.success).toBe(false)
-    expect(jsonCall).toHaveProperty('error')
+    expect(responseData.success).toBe(false)
+    expect(responseData).toHaveProperty('error')
   })
 })
