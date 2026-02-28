@@ -11,6 +11,7 @@ import { useAudio } from './useAudio'
  * 4. It should silently retry on a 'network' error to handle transient connection issues.
  * 5. It should notify onError on non-network errors.
  * 6. It should debounce identical final transcripts to prevent duplicate messages.
+ * 7. It should limit 'network' error retries to 3 times to prevent infinite loops.
  */
 
 // Track instances
@@ -184,6 +185,43 @@ describe('useAudio', () => {
 
         // Should have stopped recording
         expect(result.current.isRecording).toBe(false)
+    })
+
+    it('limits network error retries to 3 times to prevent infinite loops', async () => {
+        vi.useFakeTimers()
+        const onError = vi.fn()
+        const { result } = renderHook(() => useAudio({ onError }))
+
+        act(() => {
+            result.current.startRecording()
+        })
+
+        const recognition = mockInstances[0]
+
+        // Trigger 3 consecutive network errors
+        for (let i = 0; i < 3; i++) {
+            act(() => {
+                recognition.onerror({ error: 'network' } as any)
+                vi.advanceTimersByTime(1100)
+            })
+        }
+
+        // Should NOT have called onError prop yet
+        expect(onError).not.toHaveBeenCalled()
+        expect(result.current.isRecording).toBe(true)
+
+        // Trigger the 4th consecutive network error
+        act(() => {
+            recognition.onerror({ error: 'network' } as any)
+            vi.advanceTimersByTime(1100)
+        })
+
+        // Now it SHOULD have bailed out
+        expect(onError).toHaveBeenCalledWith(expect.any(Error))
+        expect(onError.mock.calls[0][0].message).toBe('network')
+        expect(result.current.isRecording).toBe(false)
+
+        vi.useRealTimers()
     })
 
     it('debounces identical final transcripts', () => {
