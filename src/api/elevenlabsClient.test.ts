@@ -12,10 +12,14 @@ describe('ElevenLabsClient', () => {
     global.fetch = mockFetch
 
     // Mock Audio constructor
-    global.Audio = vi.fn().mockImplementation(() => ({
-      play: vi.fn().mockResolvedValue(undefined),
-      src: '',
-    }))
+    global.Audio = vi.fn().mockImplementation(function() {
+      return {
+        play: vi.fn().mockResolvedValue(undefined),
+        src: '',
+        pause: vi.fn(),
+        addEventListener: vi.fn(),
+      }
+    })
 
     // Mock URL methods
     global.URL.createObjectURL = vi.fn(() => 'mock-audio-url')
@@ -106,6 +110,79 @@ describe('ElevenLabsClient', () => {
       })
 
       await expect(client.playAudio('Hello')).rejects.toThrow('Playback error')
+    })
+
+    it('should clean up previous audio when playing new audio', async () => {
+      const mockBlob = new Blob(['audio'], { type: 'audio/mpeg' })
+      mockFetch.mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      })
+
+      // First playback
+      await client.playAudio('First', 1)
+      expect(global.Audio).toHaveBeenCalledTimes(1)
+      
+      // Second playback should clean up first
+      await client.playAudio('Second', 2)
+      expect(global.Audio).toHaveBeenCalledTimes(2)
+      
+      // Verify cleanup was called (revokeObjectURL should be called)
+      expect(URL.revokeObjectURL).toHaveBeenCalled()
+    })
+
+    it('should clean up audio on error', async () => {
+      // First successful playback
+      const mockBlob = new Blob(['audio'], { type: 'audio/mpeg' })
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      })
+
+      await client.playAudio('First', 1)
+      
+      // Second playback with error
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({
+          error: 'Playback error',
+          success: false,
+        }),
+      })
+
+      await expect(client.playAudio('Error')).rejects.toThrow('Playback error')
+      
+      // Verify cleanup was called even on error
+      expect(URL.revokeObjectURL).toHaveBeenCalled()
+    })
+  })
+
+  describe('cleanup', () => {
+    it('should clean up active audio', async () => {
+      const mockBlob = new Blob(['audio'], { type: 'audio/mpeg' })
+      mockFetch.mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      })
+
+      await client.playAudio('Hello', 1)
+      
+      // Verify audio is active
+      expect(client['activeAudio']).not.toBeNull()
+      expect(client['activeAudioUrl']).not.toBeNull()
+
+      // Call cleanup
+      client.cleanup()
+      
+      // Verify cleanup
+      expect(client['activeAudio']).toBeNull()
+      expect(client['activeAudioUrl']).toBeNull()
+      expect(URL.revokeObjectURL).toHaveBeenCalled()
+    })
+
+    it('should handle cleanup when no audio is playing', () => {
+      // Should not throw error
+      expect(() => client.cleanup()).not.toThrow()
     })
   })
 

@@ -1,0 +1,28 @@
+--- a/src/hooks/useAudio.test.ts
++++ b/src/hooks/useAudio.test.ts
+@@ -270,3 +270,25 @@ describe('useAudio', () => {
+         // Should still only have called onTranscript once
+         expect(onTranscript).toHaveBeenCalledTimes(1)
+     })
++    
++    it('cleans up audio resources on unmount', () => {
++        const mockCleanup = vi.fn()
++        const originalElevenlabsClient = (global as any).elevenlabsClient || null
++        
++        // Mock the elevenlabsClient cleanup method
++        (global as any).elevenlabsClient = {
++            cleanup: mockCleanup
++        }
++
++        const { unmount } = renderHook(() => useAudio({}))
++
++        // Verify cleanup was not called yet
++        expect(mockCleanup).not.toHaveBeenCalled()
++
++        // Unmount the hook
++        unmount()
++
++        // Verify cleanup was called
++        expect(mockCleanup).toHaveBeenCalledTimes(1)
++    })
+ })

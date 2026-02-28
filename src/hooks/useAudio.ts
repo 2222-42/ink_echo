@@ -177,6 +177,15 @@ export function useAudio(options: UseAudioOptions = {}) {
   }, [])
 
   /**
+   * Clean up audio resources when unmounting
+   */
+  useEffect(() => {
+    return () => {
+      elevenlabsClient.cleanup()
+    }
+  }, [])
+
+  /**
    * Check if browser supports speech recognition
    */
   const isSpeechRecognitionSupported = useCallback(() => {
