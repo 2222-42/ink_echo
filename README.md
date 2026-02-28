@@ -1,3 +1,129 @@
+# Ink Echo - Project Overview & Core Concept
+(Overall project concept, philosophy, and MVP goals)
+
+<div align="right">
+[日本語は下部にあります (Japanese version is below)](#日本語版-japanese-version)
+</div>
+
+## Project Name
+Ink Echo
+
+## Hackathon Information
+- **Event**: Mistral AI Worldwide Hackathon 2026 (Tokyo edition)
+- **Target Prize**: Best Voice Use Case (ElevenLabs)  
+  → Emphasizes creative and innovative use of voice.
+
+## Core Concept
+- Users express their concerns and thoughts via voice.
+- AI (Mistral) generates deep reflective questions (Newsletter style: pointing out trade-offs, emphasizing autonomy, escaping Doomerism, etc.).
+- The reflective questions are returned via voice (ElevenLabs TTS).
+- The conversation is forcibly terminated at a maximum of 7 turns.
+- Finally, a voice prompt urges the user: "Please summarize your thoughts by handwriting them on paper and create a Zettelkasten card."
+- If the user wants to talk more → **They cannot resume unless they actually write on paper and upload a photo**.
+→ This induces a psychological state of "having no choice but to do it" (non-indifference), rejecting digital completion → forcing a return to analog.
+
+## Philosophical Foundation (Consistency with Newsletter)
+- AI remains a subordinate (it does not summarize on your behalf).
+- The final output must be analog (handwriting + Zettelkasten) to be time-resistant.
+- Critique of digital over-reliance → Protecting autonomy and the mind palace.
+- Creating a situation of "having no choice but to do it" via voice (Aiming for the ElevenLabs prize).
+
+## Primary Feature Flow
+1. Voice input → STT (Web Speech API) → Mistral generates reflective questions → Played back via ElevenLabs TTS.
+2. Reaching 7 turns → Plays a fixed message voice ("Please write on paper and upload") + disables the microphone.
+3. Photo upload → Mistral Vision analysis (text reading + keyword extraction + link suggestion).
+4. Resume based on analysis results (Positive feedback voice → new reflective questions).
+
+## Tech Stack (MVP)
+- **Frontend**: React + Vite + Tailwind CSS
+- **State Management**: localStorage (completed within a session)
+- **Backend**: Vercel Serverless Functions (or Cloudflare Workers)
+- **AI**: Mistral API (chat + vision: pixtral)
+- **Voice**: ElevenLabs TTS (Japanese voice, tone adjustment with emotion parameters)
+- **STT**: Web Speech API (Browser native)
+
+## Feature Flags
+
+### MAX_TURNS
+Sets the number of conversation turns. This can be shortened for demos and pitches.
+
+**Default value**: `7` (7 turns)
+
+**Configuration**:
+```bash
+# Client-side (Vite) - VITE_ prefix is required
+VITE_MAX_TURNS=4
+```
+
+**Use Case**:
+- **For Demos/Pitches**: Set turns to 4 to complete the demo within 5 minutes.
+- **Normal Version**: Deep dialogue realized with the default 7 turns.
+
+**Implementation Locations**:
+- Settings management: `/src/lib/featureFlags.ts`
+- Usage: `/src/hooks/useConversation.ts`, `/src/App.tsx`
+
+### ENABLE_VISION_FALLBACK
+Controls the fallback behavior when the Vision API fails.
+
+**Default value**: `false` (honestly communicates the error and prompts a retry)
+
+**Configuration**:
+```bash
+# Client-side (Vite) - VITE_ prefix is required
+VITE_ENABLE_VISION_FALLBACK=true
+
+# Server-side (Vercel Functions)
+ENABLE_VISION_FALLBACK=true
+```
+
+**Important**: Environment variables used in client-side code require the `VITE_` prefix due to Vite specifications.
+
+**Behavior**:
+- **OFF (Default)**: Displays an honest error message when the Vision API fails and prompts re-upload.
+  - Provides transparency to the user.
+  - Encourages a retry.
+  - Recommended setting (honest response aligned with the philosophy).
+
+- **ON**: Returns an empathetic response using a fallback template when the Vision API fails.
+  - Graceful degradation.
+  - The session does not stop.
+  - No deep interpretation is performed, maintaining user autonomy.
+  - Template-based question return.
+
+**Metrics**:
+- `vision_failure_honest`: Number of failures when flag is OFF.
+- `vision_failure_fallback_used`: Number of fallback usages when flag is ON.
+
+**Operational Policy**:
+1. Initial value: false (Honest mode)
+2. Turn ON temporarily only if the failure rate is high (30% or more).
+3. Gradually roll out after internal tester verification.
+
+**Implementation Locations**:
+- Server-side: `/api/mistral/vision.ts`
+- Client-side: `/src/App.tsx`
+- Flag management: `/src/lib/featureFlags.ts`
+- Fallback generation: `/api/mistral/fallback.ts`
+
+## UI / Wireframe Key Points (Mobile First)
+- Main screen: Conversation log (scroll) + fixed microphone button at the bottom.
+- 7 turns completed: Semi-transparent overlay (Prompts "Write on paper and upload" + large button).
+- Upload: Preview + Camera/Gallery selection + Analyze button.
+- On Resume: Temporary message at the top ("This card is wonderful").
+
+## Differentiation & Strengths
+- Unlike existing voice journaling tools (Kin, Voicenotes, etc.), it rejects digital completion → forces analog.
+- Specialized for the ElevenLabs prize: Voice becomes a "companion that prompts behavioral change".
+- Embodies the Newsletter philosophy (Analog Zettelkasten, time-resistance, autonomy).
+
+## Example Pitch Phrase
+> "AI deprives us of autonomy precisely because it is too convenient. But Ink Echo questions you deeply with voice, and finally forces you to 'write it on paper'. You will no longer be able to remain indifferent."
+
+---
+
+<h1 id="日本語版-japanese-version">日本語版 (Japanese Version)</h1>
+
 # Ink Echo - Project Overview & Core Concept  
 （プロジェクト全体のコンセプト・哲学・MVPの狙い）
 
