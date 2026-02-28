@@ -13,6 +13,9 @@ vi.mock('./hooks/useConversation')
 vi.mock('./hooks/useAudio')
 vi.mock('./api/mistralClient')
 vi.mock('./api/elevenlabsClient')
+vi.mock('./lib/imageUtils', () => ({
+    compressImage: vi.fn().mockResolvedValue('mock-base64-image-data'),
+}))
 
 describe('App Integration', () => {
     let mockUseConversation: any
@@ -155,7 +158,10 @@ describe('App Integration', () => {
 
             // It should call mistralClient.vision
             await waitFor(() => {
-                expect(mistralClient.vision).toHaveBeenCalled()
+                expect(mistralClient.vision).toHaveBeenCalledWith({
+                    image: 'data:image/jpeg;base64,mock-base64-image-data',
+                    messages: expect.any(Array)
+                })
             })
 
             // It should call resumeSessionWithVision
