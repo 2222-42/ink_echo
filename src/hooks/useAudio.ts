@@ -53,7 +53,7 @@ export function useAudio(options: UseAudioOptions = {}) {
       const recognition = new SpeechRecognition()
       recognition.continuous = true
       recognition.interimResults = true
-      recognition.lang = 'ja-JP'
+      recognition.lang = 'en-US'
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let interimTranscript = ''
