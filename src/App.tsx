@@ -13,7 +13,9 @@ function App() {
     turns,
     history,
     isSessionEnded,
+    isWaitingVision,
     addMessage,
+    startUploadMode,
     resumeSessionWithVision
   } = useConversation()
 
@@ -133,23 +135,23 @@ function App() {
         />
       </div>
 
-      {/* Fix 3: EndMessageOverlay is always a non-blocking banner, UploadArea is always rendered below it */}
-      {isSessionEnded && (
-        <div className="w-full flex flex-col gap-4">
-          <EndMessageOverlay
-            isVisible={true}
-            message="Your 7 turns are complete. Please upload a photo of your handwritten reflection."
-            onRestart={() => { }}
-          />
-          <div className="w-full">
-            {isUploading ? (
-              <div aria-live="polite" className="text-center text-sm text-gray-500 animate-pulse py-4">
-                Analyzing image…
-              </div>
-            ) : (
-              <UploadArea onImageSelect={handleUpload} />
-            )}
-          </div>
+      {/* Session ended overlay */}
+      <EndMessageOverlay
+        isVisible={isSessionEnded}
+        message="Your 7 turns are complete. Please upload a photo of your handwritten reflection."
+        onRestart={startUploadMode}
+      />
+
+      {/* Upload area shown when waiting for vision */}
+      {isWaitingVision && (
+        <div className="w-full">
+          {isUploading ? (
+            <div aria-live="polite" className="text-center text-sm text-gray-500 animate-pulse py-4">
+              Analyzing image…
+            </div>
+          ) : (
+            <UploadArea onImageSelect={handleUpload} />
+          )}
         </div>
       )}
     </div>

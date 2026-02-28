@@ -17,7 +17,7 @@ describe('EndMessageOverlay', () => {
         const handleRestart = vi.fn()
         render(<EndMessageOverlay isVisible={true} message="Game Over" onRestart={handleRestart} />)
 
-        const button = screen.getByRole('button', { name: /restart/i })
+        const button = screen.getByRole('button', { name: /upload/i })
         fireEvent.click(button)
 
         expect(handleRestart).toHaveBeenCalledTimes(1)
