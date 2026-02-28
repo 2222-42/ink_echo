@@ -12,6 +12,7 @@ describe('Mistral Chat API', () => {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
       setHeader: vi.fn().mockReturnThis(),
+      end: vi.fn().mockReturnThis(),
     }
 
     // Setup mock request
