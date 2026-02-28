@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { 
-  generateFallbackText, 
+import {
+  generateFallbackText,
   getHonestErrorMessage,
   getHonestErrorUIMessage,
   HONEST_ERROR_MESSAGE_JA,
   HONEST_ERROR_MESSAGE_EN,
   HONEST_ERROR_UI_JA,
   HONEST_ERROR_UI_EN
-} from './fallback'
+} from '../../../api/mistral/fallback.js'
 
 describe('Fallback Text Generator', () => {
   beforeEach(() => {
@@ -22,11 +22,11 @@ describe('Fallback Text Generator', () => {
     ]
 
     const fallbackText = generateFallbackText(history)
-    
+
     // Should be a non-empty string
     expect(fallbackText).toBeTruthy()
     expect(typeof fallbackText).toBe('string')
-    
+
     // Should contain Japanese characters
     expect(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(fallbackText)).toBe(true)
   })
@@ -38,11 +38,11 @@ describe('Fallback Text Generator', () => {
     ]
 
     const fallbackText = generateFallbackText(history)
-    
+
     // Should be a non-empty string
     expect(fallbackText).toBeTruthy()
     expect(typeof fallbackText).toBe('string')
-    
+
     // Should be in English (no Japanese characters)
     expect(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(fallbackText)).toBe(false)
   })
@@ -51,7 +51,7 @@ describe('Fallback Text Generator', () => {
     const history: Array<{ role: 'user' | 'assistant', content: string }> = []
 
     const fallbackText = generateFallbackText(history)
-    
+
     // Should default to English for empty history
     expect(fallbackText).toBeTruthy()
     expect(typeof fallbackText).toBe('string')
@@ -64,7 +64,7 @@ describe('Fallback Text Generator', () => {
     const base64Image = 'data:image/png;base64,iVBORw0KGgo='
 
     const fallbackText = generateFallbackText(history, base64Image)
-    
+
     expect(fallbackText).toBeTruthy()
   })
 
@@ -74,7 +74,7 @@ describe('Fallback Text Generator', () => {
     ]
 
     const errorMessage = getHonestErrorMessage(history)
-    
+
     expect(errorMessage).toBe(HONEST_ERROR_MESSAGE_JA)
     expect(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(errorMessage)).toBe(true)
   })
@@ -85,7 +85,7 @@ describe('Fallback Text Generator', () => {
     ]
 
     const errorMessage = getHonestErrorMessage(history)
-    
+
     expect(errorMessage).toBe(HONEST_ERROR_MESSAGE_EN)
   })
 
@@ -95,7 +95,7 @@ describe('Fallback Text Generator', () => {
     ]
 
     const errorMessage = getHonestErrorUIMessage(history)
-    
+
     expect(errorMessage).toBe(HONEST_ERROR_UI_JA)
     expect(/[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(errorMessage)).toBe(true)
   })
@@ -106,7 +106,7 @@ describe('Fallback Text Generator', () => {
     ]
 
     const errorMessage = getHonestErrorUIMessage(history)
-    
+
     expect(errorMessage).toBe(HONEST_ERROR_UI_EN)
   })
 
@@ -116,7 +116,7 @@ describe('Fallback Text Generator', () => {
     ]
 
     const fallbackText = generateFallbackText(history)
-    
+
     // Should NOT contain interpretive words like "anxiety", "determination", etc.
     // The fallback should only ask questions, not interpret
     expect(fallbackText.toLowerCase()).not.toMatch(/anxiety|determination|interpreted|analyzed/)
@@ -128,7 +128,7 @@ describe('Fallback Text Generator', () => {
     ]
 
     const fallbackText = generateFallbackText(history)
-    
+
     // Should contain question marks or invitation to share
     // This indicates delegating action to the user
     expect(fallbackText).toMatch(/\?|share|tell/)

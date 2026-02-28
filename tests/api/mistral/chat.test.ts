@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import handler from './chat'
+import handler from '../../../api/mistral/chat.js'
 
 describe('Mistral Chat API', () => {
   let mockResponse: any
@@ -55,7 +55,7 @@ describe('Mistral Chat API', () => {
             message: { content: 'Test response', role: 'assistant' },
           }],
         }),
-      })
+      } as unknown as Response)
     )
 
     // Set API key for the test
@@ -71,7 +71,7 @@ describe('Mistral Chat API', () => {
       Promise.resolve({
         ok: false,
         json: () => Promise.resolve({ error: 'API error' }),
-      })
+      } as unknown as Response)
     )
 
     process.env.MISTRAL_API_KEY = 'test-key'

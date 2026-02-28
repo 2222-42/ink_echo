@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import handler from './tts'
+import handler from '../../../api/elevenlabs/tts.js'
 
 describe('ElevenLabs TTS API', () => {
   let mockResponse: any
@@ -58,7 +58,7 @@ describe('ElevenLabs TTS API', () => {
       Promise.resolve({
         ok: true,
         body: mockStream,
-      })
+      } as unknown as Response)
     )
 
     // Set API key for the test
@@ -80,13 +80,13 @@ describe('ElevenLabs TTS API', () => {
       Promise.resolve({
         ok: true,
         body: mockStream,
-      })
+      } as unknown as Response)
     )
 
     process.env.ELEVENLABS_API_KEY = 'test-key'
 
     await handler(mockRequest, mockResponse as any)
-    
+
     // Check that audio content type was set
     const setHeaderCalls = mockResponse.setHeader.mock.calls
     const contentTypeCall = setHeaderCalls.find((call: any) => call[0] === 'Content-Type')
@@ -100,7 +100,7 @@ describe('ElevenLabs TTS API', () => {
       Promise.resolve({
         ok: false,
         json: () => Promise.resolve({ error: 'TTS API error' }),
-      })
+      } as unknown as Response)
     )
 
     process.env.ELEVENLABS_API_KEY = 'test-key'
@@ -119,7 +119,7 @@ describe('ElevenLabs TTS API', () => {
             read: () => Promise.resolve({ done: true, value: undefined }),
           }),
         },
-      })
+      } as unknown as Response)
     )
 
     global.fetch = mockFetch
@@ -131,7 +131,7 @@ describe('ElevenLabs TTS API', () => {
 
     // Check that the fetch was called with correct parameters
     expect(mockFetch).toHaveBeenCalled()
-    const requestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body || '{}')
+    const requestBody = JSON.parse((mockFetch as any).mock.calls[0][1]?.body as string || '{}')
     expect(requestBody.voice_settings.stability).toBe(0.45)
     expect(requestBody.voice_settings.style).toBe(0.55)
   })
@@ -146,7 +146,7 @@ describe('ElevenLabs TTS API', () => {
             read: () => Promise.resolve({ done: true, value: undefined }),
           }),
         },
-      })
+      } as unknown as Response)
     )
 
     global.fetch = mockFetch
@@ -158,7 +158,7 @@ describe('ElevenLabs TTS API', () => {
 
     // Check that the fetch was called with correct parameters
     expect(mockFetch).toHaveBeenCalled()
-    const requestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body || '{}')
+    const requestBody = JSON.parse((mockFetch as any).mock.calls[0][1]?.body as string || '{}')
     expect(requestBody.voice_settings.stability).toBe(0.5)
     expect(requestBody.voice_settings.style).toBe(0.3)
   })
