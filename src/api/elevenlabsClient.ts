@@ -93,14 +93,13 @@ class ElevenLabsClient {
       throw error
     }
 
-    // Clean up after playback completes or after a timeout
-    const cleanupTimeout = setTimeout(() => {
-      this.cleanupAudio()
-    }, 1000)
-
-    // Also clean up when audio ends
+    // Clean up when audio ends
     audio.addEventListener('ended', () => {
-      clearTimeout(cleanupTimeout)
+      this.cleanupAudio()
+    }, { once: true })
+
+    // Clean up when audio errors
+    audio.addEventListener('error', () => {
       this.cleanupAudio()
     }, { once: true })
   }
