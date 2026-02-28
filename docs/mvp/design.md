@@ -82,15 +82,24 @@
 - **メタフィードバックUI**: 成長曲線や評価結果等のW&Bダッシュボード可視化と連動し、ElevenLabsの音声で「君の声がInk Echoを賢くしてくれたよ」といったフィードバックをアプリ側で再生できるフックを設ける。*(仕様: [SPEC-39](./spec.md#SPEC-39))*
 
 ## 5. 実装時の注意点
-- APIキー: .env.local に記述（Vercelデプロイ時に環境変数設定）
+- APIキーの秘匿化: クライアント側（ブラウザ）から直接各種APIを呼び出すとキーが漏洩するため、Vercel Serverless Functions（`api/` 直下）にエンドポイントを作成し、バックエンドから各プロバイダーへリクエストをプロキシする構成とする。
+- APIキー: `.env.local` に記述（Vercelデプロイ時に環境変数設定）
 - エラーハンドリング: ネットワークエラー時は「もう一度話しかけて」と声で返す
 - デモ用: 7ターン制限を一時的に3ターンに変更可能にするフラグを用意
 
 ## 6. ディレクトリ構成
 
+## 6. ディレクトリ構成
+
 ```
 ink-echo/
-├── src/
+├── api/                           # Vercel Serverless Functions (Backend)
+│   ├── mistral/                   # Mistral API用プロキシ
+│   │   ├── chat.ts
+│   │   └── vision.ts
+│   └── elevenlabs/                # ElevenLabs API用プロキシ
+│       └── tts.ts
+├── src/                           # Frontend (React)
 │   ├── components/
 │   │   ├── MicButton.tsx
 │   │   ├── ConversationLog.tsx
@@ -99,14 +108,16 @@ ink-echo/
 │   ├── hooks/
 │   │   ├── useConversation.ts       # ターン・履歴・状態管理
 │   │   └── useAudio.ts              # 録音・STT・TTS再生
-│   ├── api/
-│   │   ├── mistral.ts
-│   │   └── elevenlabs.ts
+│   ├── api/                         # Backend呼出用クライアント
+│   │   ├── mistralClient.ts
+│   │   └── elevenlabsClient.ts
 │   ├── lib/
 │   │   └── storage.ts               # 将来拡張用抽象化レイヤー
 │   ├── App.tsx
 │   └── main.tsx
 ├── public/
+├── package.json
+├── vercel.json                    # (必要に応じて)機能設定
 └── vite.config.ts
 ```
 
@@ -120,10 +131,10 @@ graph TD
     B --> E[MicButton + AudioHandler]
     E --> F[Web Speech API]
     F --> C
-    C --> G[MistralCaller]
-    G --> H[Mistral API chat/vision]
-    C --> I[ElevenLabsCaller]
-    I --> J[ElevenLabs TTS]
+    C --> G[MistralClient / ElevenLabsClient]
+    G --> H[Vercel Serverless Functions <br/> /api/ ]
+    H --> I[Mistral API chat/vision]
+    H --> J[ElevenLabs TTS]
     B --> K[UploadArea]
     K --> G
 ```

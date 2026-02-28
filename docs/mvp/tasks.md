@@ -42,36 +42,47 @@
 
 ---
 
-## 📍 Track 3: 外部APIインテグレーション・音声ハンドリング (API & Audio)
-**依存関係**: なし (通信仕様に基づく単体テストで独立実装可能)
-**目的**: Mistral API, ElevenLabs API の呼び出しラッパー層、Web Speech APIの制御
+## 📍 Track 3: バックエンド（サーバーレスAPI）の実装 (Backend)
+**依存関係**: なし (フロントエンドと独立して着手可能)
+**目的**: クライアントからAPIキーを隠蔽し、各プロバイダー(Mistral/ElevenLabs)へ安全にリクエストを行う中継エンドポイント（Vercel Serverless Functions）を構築する。
 
-- [ ] **Task 3.1**: Mistral API ラッパーの実装 (`api/mistral.ts`)
-  - 要求事項: `mistral.test.ts` (Red) を作成。モックを用いてテキスト対話のプロンプト送信とレスポンスパース成功・失敗をテスト。システムプロンプトによる問い返しルール（[SPEC-08]準拠）がフォーマットとして守られているか。実装 (Green) -> Refactor。
-- [ ] **Task 3.2**: Mistral Vision API ラッパーの実装 (画像解析)
-  - 要求事項: Base64画像とこれまでの履歴を送信し、構造化JSON抽出を行うテスト (Red) を追加。実装 (Green) -> Refactor。
-- [ ] **Task 3.3**: ElevenLabs API ラッパーの実装 (`api/elevenlabs.ts`)
-  - 要求事項: `elevenlabs.test.ts` (Red)作成。テキスト送信に対するバイナリ音声の返却および、ターン数に応じて特定の声トーンバラメータ(stability/style)が動的に切り替わる(トーンシフト)挙動をテスト。実装 (Green) -> Refactor。
-- [ ] **Task 3.4**: `useAudio` フックの実装 (音声入出力管理)
-  - 要求事項: `useAudio.test.ts` (Red) 作成。Web Speech API (STT録音開始・終了のモック) と TTS(ElevenLabs再生待ち) 状態を繋いで管理するロジックをテスト。実装 (Green) -> Refactor。
+- [ ] **Task 3.1**: Vercel Serverless Functions の基盤作成と疎通確認
+  - 要求事項: `api/hello.ts` などのダミー関数を作成し、ローカル（`vercel dev`等）でエコーサーバーのルーティングとレスポンスが動作することを検証する。
+- [ ] **Task 3.2**: Mistral API (Chat & Vision) プロキシの実装 (`api/mistral/chat.ts`, `api/mistral/vision.ts`)
+  - 要求事項: 環境変数からAPIキーを取得し、フロントエンドからのテキストやBase64画像を受け取ってMistralへプロキシする処理。レスポンスの適切なパース機構とエラーハンドリングの実装・テスト。
+- [ ] **Task 3.3**: ElevenLabs TTS API プロキシの実装 (`api/elevenlabs/tts.ts`)
+  - 要求事項: 音声合成をプロキシする関数。フロントからテキストとTurnパラメータ（またはTone指定）を受け取り設定を変換して呼び出し、音声バイナリストリームをフロントエンドに返す処理の実装・テスト。
 
 ---
 
-## 📍 Track 4: 統合とフロー完成 (App Integration)
-**依存関係**: Track 1, 2, 3 の実装完了後
-**目的**: 全てのフック、コンポーネント、APIを結合し、実際のアプリケーションとしてのフローを完成させる
+## 📍 Track 4: フロントエンドAPI通信層の実装 (Frontend API Client)
+**依存関係**: Track 3 のI/Oインターフェース（またはモック）の仕様決定後
+**目的**: バックエンド関数 (`/api/`) へリクエストを送るためのReact側クライアントラッパーの実装と、音声入力周りの制御の実装。
 
-- [ ] **Task 4.1**: 通常ターンフローの結合 (UI + Logic + API)
+- [ ] **Task 4.1**: Mistral API クライアントラッパー (`src/api/mistralClient.ts`)
+  - 要求事項: `mistralClient.test.ts` (Red) を作成。`/api/mistral/chat` や `/api/mistral/vision` へFetchし、パース結果を受け取るテスト。システムプロンプトの付与はバックエンド側に任せるかフロントから送付するかを明確にし実装 (Green) -> Refactor。
+- [ ] **Task 4.2**: ElevenLabs API クライアントラッパー (`src/api/elevenlabsClient.ts`)
+  - 要求事項: `elevenlabsClient.test.ts` (Red)作成。`/api/elevenlabs/tts` を呼び出し、音声データを取得・再生する機構のテスト。実装 (Green) -> Refactor。
+- [ ] **Task 4.3**: `useAudio` フックの実装 (音声入出力管理)
+  - 要求事項: `useAudio.test.ts` (Red) 作成。フロントエンドの Web Speech API (STT録音の開始・終了) と、Track4.2で作成したTTSクライアント機能を用いて「音声->テキスト->(Mistral処理待ち)->(Elevenlabsで取得)->音声再生」の状態管理のロジックテストと実装。
+
+---
+
+## 📍 Track 5: 統合とフロー完成 (App Integration)
+**依存関係**: Track 1, 2, 4 の実装完了後 (Track 3 のデプロイ済み環境または十分なモック)
+**目的**: 全てのフック、コンポーネント、API通信層を結合し、実際のアプリケーションとしてのフローを完成させる
+
+- [ ] **Task 5.1**: 通常ターンフローの結合 (UI + Logic + API)
   - 要求事項: `integration/normal_turn.spec.md` で受入テスト仕様を作成。`App.tsx` 上で「MicButton押下 -> 録音・STT -> Mistral API呼出 -> TTS再生 -> ターン数・履歴保存」の一連のフローを繋ぎ込む。
-- [ ] **Task 4.2**: 7ターン目強制終了フローの結合
+- [ ] **Task 5.2**: 7ターン目強制終了フローの結合
   - 要求事項: `integration/end_turn.spec.md` に受入テスト仕様を作成。7ターン到達時に `EndMessageOverlay` を表示、MicButtonを無効化し、アップロードUIを表示させる。
-- [ ] **Task 4.3**: 画像アップロード・再開フローの結合
+- [ ] **Task 5.3**: 画像アップロード・再開フローの結合
   - 要求事項: `integration/upload_resume.spec.md` に受入テスト仕様を作成。アップロード画像を `Mistral Vision API` に送り、肯定的なフィードバックを音声で返しつつ対話を再開するフローを結合する。
 
 ---
 
-## （Opt）📍 Track 5: ロギングと自己改善・MCP拡張準備
+## （Opt）📍 Track 6: ロギングと自己改善・MCP拡張準備
 **目的**: Observability 向けの下準備
 
-- [ ] **Task 5.1**: Weave トレーシングのインターフェース準備
-  - 要求事項: 将来の W&B Weave 統合向けに、各APIリクエスト時のメタデータをモックとしてロギング・出力するラッパー機能を追加。
+- [ ] **Task 6.1**: Weave トレーシングのインターフェース準備
+  - 要求事項: 将来の W&B Weave 統合向けに、各APIリクエスト時のメタデータをモックとしてロギング・出力するラッパー機能をバックエンド/フロントエンドの適切な層に追加。
