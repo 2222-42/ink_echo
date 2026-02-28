@@ -34,9 +34,19 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
+  // Edge case: Terminate session forcefully if over turn limit
+  if (turn >= 8) {
+    res.status(200).json({
+      content: 'The session has ended. Please upload your card.',
+      role: 'assistant',
+      success: true
+    })
+    return
+  }
+
   try {
-    // Get system prompt
-    const systemPrompt = getSystemPrompt('chat')
+    // Get system prompt based on turn
+    const systemPrompt = getSystemPrompt('chat', turn)
 
     // Prepare messages for Mistral API
     const mistralMessages = [

@@ -67,11 +67,31 @@ Focus on:
 Remember: This analysis will be used to generate a thoughtful response to help the user continue their reflection.
 `
 
+export const TURN_7_SYSTEM_PROMPT = `
+CRITICAL: You are the AI assistant for Ink Echo. This is the final turn. Do NOT ask a question.
+Simply instruct the user to write their thoughts on a physical card and upload it.
+Keep it strictly under 100 characters total.
+
+Example:
+"This is it. Take out a physical card, write down your core realization right now, and upload a photo."
+`
+
 // Function to get the appropriate system prompt based on context
-export function getSystemPrompt(context: 'chat' | 'vision'): string {
+export function getSystemPrompt(context: 'chat' | 'vision', turn: number = 1): string {
   switch (context) {
-    case 'chat':
-      return CHAT_SYSTEM_PROMPT
+    case 'chat': {
+      if (turn >= 8) {
+        return 'CRITICAL: The conversation limit has been exceeded. Simply output: "The session has ended. Please upload your card."'
+      } else if (turn === 7) {
+        return TURN_7_SYSTEM_PROMPT
+      }
+
+      let prompt = CHAT_SYSTEM_PROMPT
+      if (turn >= 5) {
+        prompt += '\n\nINSTRUCTION for Late Turns: Your tone MUST be slightly colder and more challenging (突き放す). Push the user strictly to think for themselves without relying on your help.'
+      }
+      return prompt
+    }
     case 'vision':
       return VISION_SYSTEM_PROMPT
     default:
