@@ -1,17 +1,19 @@
 import { renderHook, act } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useAudio } from './useAudio'
 
 /**
  * ACCEPTANCE_CRITERIA
  * 
- * 1. Web Speech API should correctly capture final transcripts and only trigger onTranscript for final results.
+ * 1. Web Speech API should accumulate final transcripts and only trigger onTranscript after 3 seconds of silence.
  * 2. It should NOT trigger onTranscript manually via stopRecording() to prevent duplicate submissions, relying on the API's natural final result.
  * 3. The SpeechRecognition instance should correctly restart when it ends, without picking up a stale state.isRecording closure.
  * 4. It should silently retry on a 'network' error to handle transient connection issues.
  * 5. It should notify onError on non-network errors.
- * 6. It should debounce identical final transcripts to prevent duplicate messages.
- * 7. It should limit 'network' error retries to 3 times to prevent infinite loops.
+ * 6. It should limit 'network' error retries to 3 times to prevent infinite loops.
+ * 7. It should clear any pending transcripts when a recording is manually stopped.
+ * 8. It should prevent spaces from infinitely accumulating when concatenating final transcripts.
+ * 9. It should clear the silence timeout when `onError` occurs.
  */
 
 // Track instances
@@ -37,12 +39,16 @@ class MockSpeechRecognition {
 describe('useAudio', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        mockInstances = []
         vi.stubGlobal('SpeechRecognition', MockSpeechRecognition)
         vi.stubGlobal('webkitSpeechRecognition', MockSpeechRecognition)
     })
 
-    it('triggers onTranscript with final results only', () => {
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it('triggers onTranscript after 3 seconds of silence', () => {
+        vi.useFakeTimers()
         const onTranscript = vi.fn()
         const { result } = renderHook(() => useAudio({ onTranscript }))
 
@@ -76,8 +82,109 @@ describe('useAudio', () => {
             } as any)
         })
 
-        // Expect onTranscript TO BE called
+        // Expect onTranscript NOT to be called immediately
+        expect(onTranscript).not.toHaveBeenCalled()
+
+        // Wait 2.9 seconds
+        act(() => {
+            vi.advanceTimersByTime(2900)
+        })
+        expect(onTranscript).not.toHaveBeenCalled()
+
+        // Wait the remaining 0.1 seconds to trigger 3s timeout
+        act(() => {
+            vi.advanceTimersByTime(100)
+        })
+
+        // Expect onTranscript TO BE called with trimmed text
         expect(onTranscript).toHaveBeenCalledWith('hello world')
+    })
+
+    it('accumulates multiple final results before the silence timeout', () => {
+        vi.useFakeTimers()
+        const onTranscript = vi.fn()
+        const { result } = renderHook(() => useAudio({ onTranscript }))
+
+        act(() => {
+            result.current.startRecording()
+        })
+
+        const recognition = mockInstances[0]
+
+        // Send first final result
+        act(() => {
+            recognition.onresult({
+                resultIndex: 0,
+                results: [
+                    Object.assign([{ transcript: '  first part  ' }], { isFinal: true })
+                ]
+            } as any)
+        })
+
+        // Wait 1.5 seconds
+        act(() => {
+            vi.advanceTimersByTime(1500)
+        })
+
+        // Send second final result (timeout resets)
+        act(() => {
+            recognition.onresult({
+                resultIndex: 0,
+                results: [
+                    Object.assign([{ transcript: '  second part  ' }], { isFinal: true })
+                ]
+            } as any)
+        })
+
+        // Wait 2.9 seconds (should not be called yet)
+        act(() => {
+            vi.advanceTimersByTime(2900)
+        })
+        expect(onTranscript).not.toHaveBeenCalled()
+
+        // Wait the rest of the 3s timeout
+        act(() => {
+            vi.advanceTimersByTime(100)
+        })
+
+        // Expect onTranscript to be called with combined text, WITHOUT accumulated spaces
+        expect(onTranscript).toHaveBeenCalledWith('first part second part')
+    })
+
+    it('clears silence timeout on error', () => {
+        vi.useFakeTimers()
+        const onTranscript = vi.fn()
+        const onError = vi.fn()
+        const { result } = renderHook(() => useAudio({ onTranscript, onError }))
+
+        act(() => {
+            result.current.startRecording()
+        })
+
+        const recognition = mockInstances[0]
+
+        // Send a final result
+        act(() => {
+            recognition.onresult({
+                resultIndex: 0,
+                results: [
+                    Object.assign([{ transcript: 'hello' }], { isFinal: true })
+                ]
+            } as any)
+        })
+
+        // Trigger an error
+        act(() => {
+            recognition.onerror({ error: 'not-allowed' } as any)
+        })
+
+        // Wait 3 seconds
+        act(() => {
+            vi.advanceTimersByTime(3100)
+        })
+
+        // Assert onTranscript wasn't called from the ghost timeout
+        expect(onTranscript).not.toHaveBeenCalled()
     })
 
     it('does NOT trigger onTranscript with remaining transcript when manually stopped', () => {
@@ -161,8 +268,6 @@ describe('useAudio', () => {
 
         // Should have attempted to start again
         expect(recognition.start).toHaveBeenCalledTimes(2)
-
-        vi.useRealTimers()
     })
 
     it('calls onError on non-network errors and stops recording', () => {
@@ -214,6 +319,8 @@ describe('useAudio', () => {
         // Trigger the 4th consecutive network error
         act(() => {
             recognition.onerror({ error: 'network' } as any)
+        })
+        act(() => {
             vi.advanceTimersByTime(1100)
         })
 
@@ -221,11 +328,10 @@ describe('useAudio', () => {
         expect(onError).toHaveBeenCalledWith(expect.any(Error))
         expect(onError.mock.calls[0][0].message).toBe('network')
         expect(result.current.isRecording).toBe(false)
-
-        vi.useRealTimers()
     })
 
-    it('debounces identical final transcripts', () => {
+    it('clears timeout when manually stopped', () => {
+        vi.useFakeTimers()
         const onTranscript = vi.fn()
         const { result } = renderHook(() => useAudio({ onTranscript }))
 
@@ -240,35 +346,22 @@ describe('useAudio', () => {
             recognition.onresult({
                 resultIndex: 0,
                 results: [
-                    Object.assign([{ transcript: 'duplicate text' }], { isFinal: true })
+                    Object.assign([{ transcript: 'some text' }], { isFinal: true })
                 ]
             } as any)
         })
 
-        expect(onTranscript).toHaveBeenCalledTimes(1)
-
-        // Stop manually immediately after with the same pending text (simulating the double trigger bug)
+        // Stop manually immediately after
         act(() => {
-            recognition.onresult({
-                resultIndex: 0,
-                results: [
-                    Object.assign([{ transcript: 'duplicate text' }], { isFinal: false })
-                ]
-            } as any)
             result.current.stopRecording()
         })
 
-        // Exhaustive rapid trigger
+        // Wait 3.1 seconds
         act(() => {
-            recognition.onresult({
-                resultIndex: 0,
-                results: [
-                    Object.assign([{ transcript: 'duplicate text' }], { isFinal: true })
-                ]
-            } as any)
+            vi.advanceTimersByTime(3100)
         })
 
-        // Should still only have called onTranscript once
-        expect(onTranscript).toHaveBeenCalledTimes(1)
+        // Should NOT have called onTranscript because timer was cleared
+        expect(onTranscript).not.toHaveBeenCalled()
     })
 })

@@ -389,3 +389,27 @@ Phase: GREEN
 Tests run: 99
 Failed: none
 Overall: PASS → ready for next
+## 2026-03-01T01:13:42+09:00
+File: src/hooks/useAudio.test.ts
+Phase: RED
+Tests run: 100
+Failed: 3
+Overall: FAIL → fix required
+## 2026-03-01T01:15:49+09:00
+File: src/hooks/useAudio.ts
+Phase: GREEN
+Tests run: 100
+Failed: 0
+Overall: PASS → ready for next
+## 2026-03-01T01:36:00+09:00
+File: src/hooks/useAudio.test.ts (PR #36 Review Feedback)
+Phase: RED
+Tests run: 100
+Failed: 6 (vi.useFakeTimers leaking or failing due to trailing spaces / onerror timeout clearing)
+Overall: FAIL → fix required
+## 2026-03-01T01:36:20+09:00
+File: src/hooks/useAudio.test.ts (PR #36 Review Feedback fixes)
+Phase: GREEN
+Tests run: 100
+Failed: 0
+Overall: PASS → ready for next

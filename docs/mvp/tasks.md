@@ -14,15 +14,15 @@
 **依存関係**: なし (独立して着手可能)
 **目的**: React/Vite/Tailwindの基盤構築、各UIコンポーネントのプロップ検証と見た目の実装 (APIモック利用)
 
-- [ ] **Task 1.1**: 初期プロジェクトのセットアップとLint/Test環境構築
+- [x] **Task 1.1**: 初期プロジェクトのセットアップとLint/Test環境構築
   - 要求事項: `infra.spec.md` を作成し受入基準を定義後、Vite + React + Tailwind + Vitest + Testing Library のインストール・設定を行う。
-- [ ] **Task 1.2**: `MicButton` コンポーネントの実装
+- [x] **Task 1.2**: `MicButton` コンポーネントの実装
   - 要求事項: TDD厳守。`MicButton.test.tsx` (Red) を作成し、録音中/停止中/Disabled の見た目の変化とコールバック発火を検証する。その後実装 (Green) -> Refactor。
-- [ ] **Task 1.3**: `ConversationLog` コンポーネントの実装
+- [x] **Task 1.3**: `ConversationLog` コンポーネントの実装
   - 要求事項: TDD厳守。`ConversationLog.test.tsx` (Red) を作成し、会話履歴配列の受け取りと正しい表示、音声再生ボタンの動作可否を検証する。実装 (Green) -> Refactor。
-- [ ] **Task 1.4**: `UploadArea` コンポーネントの実装
+- [x] **Task 1.4**: `UploadArea` コンポーネントの実装
   - 要求事項: TDD厳守。`UploadArea.test.tsx` (Red) を作成。ファイル選択・D&DUI、画像のBase64プレビューなどの動作を検証する。実装 (Green) -> Refactor。
-- [ ] **Task 1.5**: `EndMessageOverlay` コンポーネントの実装
+- [x] **Task 1.5**: `EndMessageOverlay` コンポーネントの実装
   - 要求事項: TDD厳守。`EndMessageOverlay.test.tsx` (Red) を作成し、特定の条件(ターン終了トリガー)でオーバーレイと指定メッセージが表示されるか検証する。実装 (Green) -> Refactor。
 
 ---

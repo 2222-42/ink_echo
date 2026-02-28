@@ -20,6 +20,12 @@ export function useAudio(options: UseAudioOptions = {}) {
   // Ref to track consecutive network errors
   const networkErrorRetriesRef = useRef<number>(0)
 
+  // Ref to accumulate final transcripts before sending
+  const transcriptBufferRef = useRef<string>('')
+
+  // Ref for the silence timeout
+  const silenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => {
     onTranscriptRef.current = onTranscript
     onErrorRef.current = onError
@@ -60,36 +66,63 @@ export function useAudio(options: UseAudioOptions = {}) {
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let interimTranscript = ''
-        let finalTranscript = ''
+        let newFinalTranscript = ''
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript
           if (event.results[i].isFinal) {
-            finalTranscript += transcript + ' '
+            newFinalTranscript += transcript + ' '
           } else {
             interimTranscript += transcript
           }
         }
 
-        const displayTranscript = finalTranscript || interimTranscript
+        // Clear the existing timeout, as the user is speaking
+        if (silenceTimeoutRef.current) {
+          clearTimeout(silenceTimeoutRef.current)
+          silenceTimeoutRef.current = null
+        }
+
+        if (newFinalTranscript) {
+          const cleaned = newFinalTranscript.trim()
+          if (cleaned) {
+            transcriptBufferRef.current = transcriptBufferRef.current
+              ? transcriptBufferRef.current + ' ' + cleaned
+              : cleaned
+          }
+        }
+
+        const displayTranscript = (transcriptBufferRef.current + interimTranscript).trimStart()
         if (displayTranscript) {
           networkErrorRetriesRef.current = 0 // Reset retries on successful recognition
         }
         setState(prev => ({ ...prev, transcript: displayTranscript }))
 
-        // Invoke callback on FINAL results
-        if (finalTranscript) {
-          const text = finalTranscript.trim()
-          if (text && text !== lastTranscriptRef.current) {
-            lastTranscriptRef.current = text
-            onTranscriptRef.current?.(text)
-          }
-          setState(prev => ({ ...prev, transcript: '' }))
+        // Start a 3-second silence timeout if we have a buffered transcript
+        if (transcriptBufferRef.current) {
+          silenceTimeoutRef.current = setTimeout(() => {
+            const text = transcriptBufferRef.current.trim()
+            if (text && text !== lastTranscriptRef.current) {
+              lastTranscriptRef.current = text
+              onTranscriptRef.current?.(text)
+            }
+            // Reset state
+            transcriptBufferRef.current = ''
+            setState(prev => ({ ...prev, transcript: '' }))
+            silenceTimeoutRef.current = null
+          }, 3000)
         }
       }
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error)
+
+        // Clear timeouts on error to prevent ghost transcription events
+        if (silenceTimeoutRef.current) {
+          clearTimeout(silenceTimeoutRef.current)
+          silenceTimeoutRef.current = null
+        }
+        transcriptBufferRef.current = ''
 
         // Handle spurious network errors by retrying under the hood
         if (event.error === 'network' && isRecordingRef.current) {
@@ -132,6 +165,9 @@ export function useAudio(options: UseAudioOptions = {}) {
       if (recognitionRef.current) {
         recognitionRef.current.stop()
       }
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current)
+      }
     }
   }, []) // Empty dependency array ensures it's not torn down prematurely
 
@@ -145,6 +181,12 @@ export function useAudio(options: UseAudioOptions = {}) {
     }
 
     try {
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current)
+        silenceTimeoutRef.current = null
+      }
+      transcriptBufferRef.current = ''
+
       recognitionRef.current.start()
       lastTranscriptRef.current = null // Reset debounce tracker on new recording
       networkErrorRetriesRef.current = 0 // Reset retries on intentional start
@@ -161,6 +203,12 @@ export function useAudio(options: UseAudioOptions = {}) {
    * Stop recording and return the transcript
    */
   const stopRecording = useCallback(() => {
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current)
+      silenceTimeoutRef.current = null
+    }
+    transcriptBufferRef.current = ''
+
     if (recognitionRef.current) {
       recognitionRef.current.stop()
       setState(prev => ({ ...prev, isRecording: false, isListening: false }))
