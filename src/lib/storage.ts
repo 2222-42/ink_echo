@@ -1,6 +1,7 @@
 export interface SessionStorage {
     saveSession(id: string, state: object): void;
     getSession(id: string): object | null;
+    removeSession(id: string): void;
 }
 
 export const localStorageImpl: SessionStorage = {
@@ -23,6 +24,14 @@ export const localStorageImpl: SessionStorage = {
         } catch (error) {
             console.error('Error parsing session from localStorage', error);
             return null;
+        }
+    },
+
+    removeSession(id: string): void {
+        try {
+            localStorage.removeItem(id);
+        } catch (error) {
+            console.error('Error removing session from localStorage', error);
         }
     }
 };

@@ -6,6 +6,7 @@ describe('localStorageImpl', () => {
         localStorage.clear();
         vi.spyOn(Storage.prototype, 'setItem');
         vi.spyOn(Storage.prototype, 'getItem');
+        vi.spyOn(Storage.prototype, 'removeItem');
     });
 
     afterEach(() => {
@@ -46,5 +47,15 @@ describe('localStorageImpl', () => {
         const retrieved = localStorageImpl.getSession(id);
         expect(retrieved).toBeNull();
         expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    it('removes session correctly', () => {
+        const id = 'test-session-remove';
+        localStorage.setItem(id, JSON.stringify({}));
+
+        localStorageImpl.removeSession(id);
+
+        expect(localStorage.removeItem).toHaveBeenCalledWith(id);
+        expect(localStorage.getItem(id)).toBeNull();
     });
 });

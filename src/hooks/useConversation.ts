@@ -1,29 +1,22 @@
 import { useState, useEffect } from 'react';
 import { localStorageImpl } from '../lib/storage';
+import type { ConversationState, Message } from '../types/conversation';
 
 const SESSION_KEY = 'ink-echo-session';
 
-export interface Message {
-    role: 'user' | 'assistant';
-    content: string;
-}
-
-export interface ConversationState {
-    id: string;
-    turns: number;
-    history: Message[];
-    isSessionEnded: boolean;
-    isWaitingVision: boolean;
-}
-
 function isValidConversationState(value: unknown): value is ConversationState {
     if (typeof value !== 'object' || value === null) return false;
-    const s = value as Partial<ConversationState>;
+    const s = value as Record<string, unknown>;
+
     return (
         typeof s.id === 'string' &&
-        typeof s.turns === 'number' &&
+        typeof s.turns === 'number' && Number.isInteger(s.turns) && s.turns >= 0 &&
         Array.isArray(s.history) &&
-        s.history.every(m => m && typeof m === 'object' && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string') &&
+        s.history.every((m: unknown) =>
+            typeof m === 'object' && m !== null &&
+            'role' in m && (m.role === 'user' || m.role === 'assistant') &&
+            'content' in m && typeof m.content === 'string'
+        ) &&
         typeof s.isSessionEnded === 'boolean' &&
         typeof s.isWaitingVision === 'boolean'
     );
@@ -32,8 +25,13 @@ function isValidConversationState(value: unknown): value is ConversationState {
 export const useConversation = () => {
     const [state, setState] = useState<ConversationState>(() => {
         const storedSession = localStorageImpl.getSession(SESSION_KEY);
-        if (isValidConversationState(storedSession)) {
-            return storedSession;
+        if (storedSession) {
+            if (isValidConversationState(storedSession)) {
+                return storedSession;
+            } else {
+                console.warn('Invalid or corrupted session data found. Starting fresh session.');
+                localStorageImpl.removeSession(SESSION_KEY);
+            }
         }
 
         return {
