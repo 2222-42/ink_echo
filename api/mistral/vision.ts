@@ -28,7 +28,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const { image, messages, turn = 1 }: VisionRequest = req.body
+  const { image, messages }: VisionRequest = req.body
 
   // Validate request
   if (!image || typeof image !== 'string') {
@@ -96,9 +96,9 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Parse the JSON response
-    let parsedResponse: any
+    let parsedResponse: Record<string, unknown>
     try {
-      parsedResponse = JSON.parse(assistantMessage.content)
+      parsedResponse = JSON.parse(assistantMessage.content) as Record<string, unknown>
     } catch (parseError) {
       console.error('Failed to parse JSON response:', parseError)
       throw new Error('Failed to parse vision analysis result')

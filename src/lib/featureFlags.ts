@@ -19,10 +19,15 @@ export interface FeatureFlags {
  */
 function getFeatureFlag(flagName: keyof FeatureFlags): boolean {
   // Check environment variable (for server-side)
-  if (typeof process !== 'undefined' && process.env) {
-    const envValue = process.env[`VITE_${flagName}`] || process.env[flagName]
-    if (envValue !== undefined) {
-      return envValue === 'true' || envValue === '1'
+  // Use globalThis to avoid TypeScript errors about process not being defined
+  if (typeof globalThis !== 'undefined' && 'process' in globalThis) {
+    const globalObj = globalThis as unknown as { process?: { env?: Record<string, string> } }
+    const processEnv = globalObj.process?.env
+    if (processEnv) {
+      const envValue = processEnv[`VITE_${flagName}`] || processEnv[flagName]
+      if (envValue !== undefined) {
+        return envValue === 'true' || envValue === '1'
+      }
     }
   }
 
