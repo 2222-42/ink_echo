@@ -1,0 +1,122 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import handler from './vision'
+
+describe('Mistral Vision API', () => {
+  let mockResponse: any
+  let mockRequest: VercelRequest
+
+  beforeEach(() => {
+    // Reset mock response for each test
+    mockResponse = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+      setHeader: vi.fn().mockReturnThis(),
+    }
+
+    // Setup mock request
+    mockRequest = {
+      method: 'POST',
+      url: '/api/mistral/vision',
+      headers: {},
+      body: {
+        image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        messages: [
+          { role: 'user', content: 'Analyze this image' },
+        ],
+      },
+    } as VercelRequest
+  })
+
+  it('should reject GET requests', async () => {
+    mockRequest.method = 'GET'
+    await handler(mockRequest, mockResponse as any)
+    expect(mockResponse.status).toHaveBeenCalledWith(405)
+  })
+
+  it('should reject requests without image', async () => {
+    mockRequest.body = { messages: [{ role: 'user', content: 'Test' }] }
+    await handler(mockRequest, mockResponse as any)
+    expect(mockResponse.status).toHaveBeenCalledWith(400)
+  })
+
+  it('should reject requests without messages', async () => {
+    mockRequest.body = { image: 'data:image/png;base64,test' }
+    await handler(mockRequest, mockResponse as any)
+    expect(mockResponse.status).toHaveBeenCalledWith(400)
+  })
+
+  it('should set CORS headers', async () => {
+    // Mock fetch to return a successful response with JSON
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          choices: [{
+            message: { 
+              content: '{"text":"test text","themes":["theme1"],"keywords":["key1"],"main_idea":"test","connections":[],"feedback":"good"}',
+              role: 'assistant' 
+            },
+          }],
+        }),
+      })
+    )
+
+    // Set API key for the test
+    process.env.MISTRAL_API_KEY = 'test-key'
+
+    await handler(mockRequest, mockResponse as any)
+    expect(mockResponse.setHeader).toHaveBeenCalled()
+  })
+
+  it('should parse JSON response correctly', async () => {
+    // Mock fetch to return a successful response with JSON
+    const mockFetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          choices: [{
+            message: { 
+              content: '{"text":"extracted text","themes":["theme1","theme2"],"keywords":["key1","key2"],"main_idea":"main idea","connections":["connection1"],"feedback":"great work"}',
+              role: 'assistant' 
+            },
+          }],
+        }),
+      })
+    )
+
+    global.fetch = mockFetch
+    process.env.MISTRAL_API_KEY = 'test-key'
+
+    await handler(mockRequest, mockResponse as any)
+    
+    // Check that the response contains parsed JSON data
+    const jsonCall = mockResponse.json.mock.calls[0][0]
+    expect(jsonCall.success).toBe(true)
+    expect(jsonCall.data).toHaveProperty('text')
+    expect(jsonCall.data).toHaveProperty('themes')
+    expect(jsonCall.data).toHaveProperty('keywords')
+    
+    // Verify that the image was properly included in the request
+    expect(mockFetch).toHaveBeenCalled()
+    const requestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body || '{}')
+    expect(requestBody.messages).toHaveLength(2) // system + user with image
+    expect(requestBody.messages[1].content).toHaveProperty('type', 'text')
+    expect(requestBody.messages[1].content).toHaveProperty('image_url')
+  })
+
+  it('should handle API errors gracefully', async () => {
+    // Mock fetch to return an error
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Vision API error' }),
+      })
+    )
+
+    process.env.MISTRAL_API_KEY = 'test-key'
+
+    await handler(mockRequest, mockResponse as any)
+    expect(mockResponse.status).toHaveBeenCalledWith(500)
+  })
+})

@@ -46,12 +46,20 @@
 **依存関係**: なし (フロントエンドと独立して着手可能)
 **目的**: クライアントからAPIキーを隠蔽し、各プロバイダー(Mistral/ElevenLabs)へ安全にリクエストを行う中継エンドポイント（Vercel Serverless Functions）を構築する。
 
-- [ ] **Task 3.1**: Vercel Serverless Functions の基盤作成と疎通確認
+- [x] **Task 3.1**: Vercel Serverless Functions の基盤作成と疎通確認
   - 要求事項: `api/hello.ts` などのダミー関数を作成し、ローカル（`vercel dev`等）でエコーサーバーのルーティングとレスポンスが動作することを検証する。
-- [ ] **Task 3.2**: Mistral API (Chat & Vision) プロキシの実装 (`api/mistral/chat.ts`, `api/mistral/vision.ts`)
+  - 実装完了: `api/hello.ts`, `api/config.ts`, `api/middleware.ts`, `api.spec.md`, `api/hello.test.ts`
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
+- [x] **Task 3.2**: Mistral API (Chat & Vision) プロキシの実装 (`api/mistral/chat.ts`, `api/mistral/vision.ts`)
   - 要求事項: 環境変数からAPIキーを取得し、Mistralへプロキシする処理。**システムプロンプト（[SPEC-08]準拠のルール等）はプロンプト・インジェクション対策としてサーバー側（`api/mistral/prompts.ts`等）に秘匿・管理する**こと。Vision解析時は `response_format: { type: "json_object" }` を指定し、手書き文字・テーマ等の構造化データ抽出を担保する。レスポンスの適切なパース機構とエラーハンドリングの実装・テスト。
-- [ ] **Task 3.3**: ElevenLabs TTS API プロキシの実装 (`api/elevenlabs/tts.ts`)
+  - 実装完了: `api/mistral/prompts.ts`, `api/mistral/chat.ts`, `api/mistral/vision.ts`, `api/mistral/chat.test.ts`, `api/mistral/vision.test.ts`
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
+  - SPEC準拠: ✅ SPEC-08 (システムプロンプト), ✅ SPEC-15 (JSON出力形式)
+- [x] **Task 3.3**: ElevenLabs TTS API プロキシの実装 (`api/elevenlabs/tts.ts`)
   - 要求事項: 音声合成をプロキシする関数。フロントからテキストとTurnパラメータ（またはTone指定）を受け取り設定を変換して呼び出し、音声バイナリストリームをフロントエンドに返す処理の実装・テスト。
+  - 実装完了: `api/elevenlabs/tts.ts`, `api/elevenlabs/tts.test.ts`
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
+  - SPEC準拠: ✅ SPEC-19 (ターン1-4: 穏やか・共感的トーン), ✅ SPEC-20 (ターン5-7: 真剣・鋭いトーン)
 
 ---
 
