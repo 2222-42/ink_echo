@@ -19,13 +19,13 @@ export const UploadArea: React.FC<UploadAreaProps> = ({ onImageSelect }) => {
         }
     }, []);
 
-    const processFile = (file: File) => {
+    const processFile = useCallback((file: File) => {
         if (file && file.type.startsWith('image/')) {
             const url = URL.createObjectURL(file);
             setPreviewUrl(url);
             onImageSelect(file);
         }
-    };
+    }, [onImageSelect]);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -35,7 +35,7 @@ export const UploadArea: React.FC<UploadAreaProps> = ({ onImageSelect }) => {
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             processFile(e.dataTransfer.files[0]);
         }
-    }, [onImageSelect]);
+    }, [processFile]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         e.preventDefault();
@@ -44,10 +44,15 @@ export const UploadArea: React.FC<UploadAreaProps> = ({ onImageSelect }) => {
         }
     };
 
+    React.useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
+
     const handleClear = () => {
-        if (previewUrl) {
-            URL.revokeObjectURL(previewUrl);
-        }
         setPreviewUrl(null);
         onImageSelect(null);
     };
