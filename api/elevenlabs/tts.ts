@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { withCors, withErrorHandling, withRequestValidation } from '../middleware'
-import { API_CONFIG, type ApiResponse } from '../config'
+import { withCors, withErrorHandling, withRequestValidation } from '../middleware.js'
+import { API_CONFIG, type ApiResponse } from '../config.js'
 
 interface TTSEndpoint {
   text: string

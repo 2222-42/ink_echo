@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { withCors, withErrorHandling, withRequestValidation } from '../middleware'
-import { API_CONFIG, type ApiResponse } from '../config'
-import { getSystemPrompt } from './prompts'
+import { withCors, withErrorHandling, withRequestValidation } from '../middleware.js'
+import { API_CONFIG, type ApiResponse } from '../config.js'
+import { getSystemPrompt } from './prompts.js'
 
 interface VisionRequest {
   image: string // Base64 encoded image
@@ -54,11 +54,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
         role: 'user',
         content: [
           { type: 'text', text: 'Analyze this handwritten note and extract the following information:' },
-          { 
-            type: 'image_url', 
-            image_url: { 
-              url: `data:image/png;base64,${image.split(',')[1] || image}` 
-            } 
+          {
+            type: 'image_url',
+            image_url: {
+              url: `data:image/png;base64,${image.split(',')[1] || image}`
+            }
           }
         ]
       }
@@ -89,7 +89,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Extract the assistant's response
     const assistantMessage = mistralData.choices[0]?.message
-    
+
     if (!assistantMessage) {
       throw new Error('No response from Mistral Vision API')
     }
