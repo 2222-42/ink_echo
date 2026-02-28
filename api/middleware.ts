@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { API_CONFIG, type ApiErrorResponse } from './config'
+import { API_CONFIG, type ApiErrorResponse } from './config.js'
 import dns from 'node:dns'
 
 // Workaround for Node.js >= 18 fetch EAI_AGAIN local IPv6 issues

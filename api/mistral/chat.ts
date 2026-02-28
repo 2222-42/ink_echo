@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { withCors, withErrorHandling, withRequestValidation } from '../middleware'
-import { API_CONFIG, type ApiResponse } from '../config'
-import { getSystemPrompt } from './prompts'
+import { withCors, withErrorHandling, withRequestValidation } from '../middleware.js'
+import { API_CONFIG, type ApiResponse } from '../config.js'
+import { getSystemPrompt } from './prompts.js'
 
 interface ChatRequest {
   messages: Array<{
