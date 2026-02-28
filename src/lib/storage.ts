@@ -1,9 +1,9 @@
-export interface Storage {
+export interface SessionStorage {
     saveSession(id: string, state: object): void;
     getSession(id: string): object | null;
 }
 
-export const localStorageImpl: Storage = {
+export const localStorageImpl: SessionStorage = {
     saveSession(id: string, state: object): void {
         try {
             const serializedState = JSON.stringify(state);

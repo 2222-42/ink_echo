@@ -16,10 +16,23 @@ export interface ConversationState {
     isWaitingVision: boolean;
 }
 
+function isValidConversationState(value: unknown): value is ConversationState {
+    if (typeof value !== 'object' || value === null) return false;
+    const s = value as Partial<ConversationState>;
+    return (
+        typeof s.id === 'string' &&
+        typeof s.turns === 'number' &&
+        Array.isArray(s.history) &&
+        s.history.every(m => m && typeof m === 'object' && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string') &&
+        typeof s.isSessionEnded === 'boolean' &&
+        typeof s.isWaitingVision === 'boolean'
+    );
+}
+
 export const useConversation = () => {
     const [state, setState] = useState<ConversationState>(() => {
-        const storedSession = localStorageImpl.getSession(SESSION_KEY) as ConversationState | null;
-        if (storedSession) {
+        const storedSession = localStorageImpl.getSession(SESSION_KEY);
+        if (isValidConversationState(storedSession)) {
             return storedSession;
         }
 
