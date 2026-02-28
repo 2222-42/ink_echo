@@ -1,15 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { Volume2 } from 'lucide-react';
-
-export interface Message {
-    id: string;
-    role: 'user' | 'assistant';
-    content: string;
-}
+import type { Message } from '../types/conversation';
 
 export interface ConversationLogProps {
     messages: Message[];
-    onPlayAudio: (messageId: string) => void;
+    onPlayAudio?: (content: string) => void;
     autoScroll?: boolean;
 }
 
@@ -28,11 +23,11 @@ export const ConversationLog: React.FC<ConversationLogProps> = ({
 
     return (
         <div className="flex flex-col space-y-4 p-4 overflow-y-auto w-full max-w-2xl mx-auto h-[60vh]">
-            {messages.map((msg, index) => {
+            {messages.map((msg: Message, i: number) => {
                 const isUser = msg.role === 'user';
                 return (
                     <div
-                        key={msg.id}
+                        key={`${msg.role}-${i}`}
                         className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
                     >
                         <div
@@ -48,10 +43,10 @@ export const ConversationLog: React.FC<ConversationLogProps> = ({
                                 {msg.content}
                             </p>
 
-                            {!isUser && (
+                            {!isUser && onPlayAudio && (
                                 <button
                                     data-testid="play-audio-button"
-                                    onClick={() => onPlayAudio(msg.id)}
+                                    onClick={() => onPlayAudio(msg.content)}
                                     className="absolute -right-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 p-2 rounded-full hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
                                     aria-label="Play audio message"
                                 >

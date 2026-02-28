@@ -17,9 +17,8 @@ export function useAudio(options: UseAudioOptions = {}) {
     transcript: '',
   })
 
-  // Refs for Web Speech API
+  // Ref for Web Speech API
   const recognitionRef = useRef<SpeechRecognition | null>(null)
-  const audioContextRef = useRef<AudioContext | null>(null)
 
   // Initialize Web Speech API
   useEffect(() => {

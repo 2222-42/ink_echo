@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { ConversationLog, Message } from './ConversationLog'
+import type { Message } from '../types/conversation'
+import { ConversationLog } from './ConversationLog'
 
 const mockMessages: Message[] = [
-    { id: '1', role: 'user', content: 'Hello' },
-    { id: '2', role: 'assistant', content: 'Hi there!' },
+    { role: 'user', content: 'Hello' },
+    { role: 'assistant', content: 'Hi there!' },
 ]
 
 describe('ConversationLog', () => {
@@ -33,7 +34,7 @@ describe('ConversationLog', () => {
         const playButton = screen.getByTestId('play-audio-button')
         fireEvent.click(playButton)
 
-        expect(handlePlayAudio).toHaveBeenCalledWith('2')
+        expect(handlePlayAudio).toHaveBeenCalledWith('Hi there!')
         expect(handlePlayAudio).toHaveBeenCalledTimes(1)
     })
 
@@ -45,7 +46,7 @@ describe('ConversationLog', () => {
 
         const newMessages: Message[] = [
             ...mockMessages,
-            { id: '3', role: 'user', content: 'How are you?' },
+            { role: 'user', content: 'How are you?' },
         ]
 
         rerender(<ConversationLog messages={newMessages} autoScroll={true} onPlayAudio={vi.fn()} />)
