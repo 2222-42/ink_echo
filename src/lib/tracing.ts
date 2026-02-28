@@ -39,6 +39,39 @@ export interface TraceLogger {
  */
 class MockTraceLogger implements TraceLogger {
   private traces: Map<string, Partial<TraceMetadata>> = new Map()
+  private readonly MAX_TRACES = 1000 // Limit traces to prevent memory leaks
+  private readonly CLEANUP_INTERVAL = 60000 // Cleanup old traces every 60 seconds
+
+  constructor() {
+    // Periodically clean up old traces to prevent memory leaks
+    if (typeof setInterval !== 'undefined') {
+      setInterval(() => this.cleanup(), this.CLEANUP_INTERVAL)
+    }
+  }
+
+  private cleanup(): void {
+    // Remove traces older than 5 minutes
+    const now = Date.now()
+    const maxAge = 5 * 60 * 1000 // 5 minutes
+    
+    for (const [traceId, metadata] of this.traces.entries()) {
+      if (metadata.timestamp) {
+        const traceAge = now - new Date(metadata.timestamp).getTime()
+        if (traceAge > maxAge) {
+          this.traces.delete(traceId)
+        }
+      }
+    }
+    
+    // If still too many traces, remove oldest ones
+    if (this.traces.size > this.MAX_TRACES) {
+      const tracesToRemove = this.traces.size - this.MAX_TRACES
+      const entries = Array.from(this.traces.keys())
+      for (let i = 0; i < tracesToRemove; i++) {
+        this.traces.delete(entries[i])
+      }
+    }
+  }
 
   log(metadata: TraceMetadata): void {
     console.log('[TRACE]', JSON.stringify(metadata, null, 2))

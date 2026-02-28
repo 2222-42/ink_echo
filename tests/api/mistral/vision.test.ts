@@ -12,6 +12,7 @@ describe('Mistral Vision API', () => {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
       setHeader: vi.fn().mockReturnThis(),
+      end: vi.fn().mockReturnThis(),
     }
 
     // Setup mock request
@@ -89,14 +90,14 @@ describe('Mistral Vision API', () => {
     process.env.MISTRAL_API_KEY = 'test-key'
     
     // Capture the response data
-    let responseData: any
+    let responseData: { success?: boolean; data?: unknown; error?: string } | undefined
     const originalJson = mockResponse.json
-    mockResponse.json = vi.fn((data: any) => {
+    mockResponse.json = vi.fn((data: { success?: boolean; data?: unknown; error?: string }) => {
       responseData = data
       return originalJson(data)
     })
 
-    await handler(mockRequest, mockResponse as any)
+    await handler(mockRequest, mockResponse as unknown as VercelResponse)
 
     // Check that the response contains parsed JSON data
     expect(responseData.success).toBe(true)
@@ -141,14 +142,14 @@ describe('Mistral Vision API', () => {
     process.env.ENABLE_VISION_FALLBACK = 'true'
     
     // Capture the response data
-    let responseData: any
+    let responseData: { success?: boolean; data?: unknown; error?: string } | undefined
     const originalJson = mockResponse.json
-    mockResponse.json = vi.fn((data: any) => {
+    mockResponse.json = vi.fn((data: { success?: boolean; data?: unknown; error?: string }) => {
       responseData = data
       return originalJson(data)
     })
 
-    await handler(mockRequest, mockResponse as any)
+    await handler(mockRequest, mockResponse as unknown as VercelResponse)
 
     // Should return 200 with fallback response instead of 500 error
     expect(mockResponse.status).toHaveBeenCalledWith(200)
@@ -177,20 +178,20 @@ describe('Mistral Vision API', () => {
     delete process.env.ENABLE_VISION_FALLBACK
     
     // Capture the response data
-    let responseData: any
+    let responseData: { success?: boolean; data?: unknown; error?: string } | undefined
     const originalJson = mockResponse.json
-    mockResponse.json = vi.fn((data: any) => {
+    mockResponse.json = vi.fn((data: { success?: boolean; data?: unknown; error?: string }) => {
       responseData = data
       return originalJson(data)
     })
 
-    await handler(mockRequest, mockResponse as any)
+    await handler(mockRequest, mockResponse as unknown as VercelResponse)
 
     // Should return 500 error
     expect(mockResponse.status).toHaveBeenCalledWith(500)
 
     // Check that response is an error
-    expect(responseData.success).toBe(false)
+    expect(responseData?.success).toBe(false)
     expect(responseData).toHaveProperty('error')
   })
 })

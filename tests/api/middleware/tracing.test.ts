@@ -8,6 +8,7 @@ describe('withTracing middleware', () => {
     status: ReturnType<typeof vi.fn>
     json: ReturnType<typeof vi.fn>
     setHeader: ReturnType<typeof vi.fn>
+    end: ReturnType<typeof vi.fn>
     statusCode: number
   }
   let mockHandler: ReturnType<typeof vi.fn>
@@ -29,6 +30,7 @@ describe('withTracing middleware', () => {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
       setHeader: vi.fn().mockReturnThis(),
+      end: vi.fn().mockReturnThis(),
       statusCode: 200,
     }
 
