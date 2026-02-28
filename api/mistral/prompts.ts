@@ -72,8 +72,10 @@ export function getSystemPrompt(context: 'chat' | 'vision', turn: number = 1): s
   switch (context) {
     case 'chat': {
       let prompt = CHAT_SYSTEM_PROMPT
-      if (turn >= 7) {
-        prompt += '\n\nCRITICAL INSTRUCTION for Turn 7: This is the final turn. Your tone MUST be cold and final. You MUST explicitly instruct the user to write their thoughts or realizations on a physical card right now. Do not ask a question this time; just give the firm instruction to write on a card.'
+      if (turn >= 8) {
+        prompt += '\n\nCRITICAL: The conversation limit has been exceeded. Simply output: "The session has ended. Please upload your card."'
+      } else if (turn === 7) {
+        prompt += '\n\nCRITICAL INSTRUCTION for Turn 7: This is the final turn. Your tone MUST be cold and final. You MUST explicitly instruct the user to write their thoughts or realizations on a physical card right now. IMPORTANT: You MUST STILL end with a question to satisfy the FIRST rule, but make it a behavior-forcing question that leaves no escape, such as "Have you written it down on your card yet?" or "What is stopping you from writing it on the card right now?"'
       } else if (turn >= 5) {
         prompt += '\n\nINSTRUCTION for Late Turns: Your tone MUST be slightly colder and more challenging (突き放す). Push the user strictly to think for themselves without relying on your help.'
       }

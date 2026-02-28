@@ -39,12 +39,19 @@ describe('Mistral API Prompts', () => {
             expect(promptTurn5).not.toContain('physical card right now')
         })
 
-        it('should append the explicitly final instruction for turn 7', () => {
+        it('should append the behavior-forcing question instruction for turn 7', () => {
             const promptTurn7 = getSystemPrompt('chat', 7)
 
             expect(promptTurn7).toContain('physical card right now')
-            // Turn 7 might or might not contain the turn 5-6 tone, depending on our implementation.
-            // Easiest is just ensuring the final turn critical instruction is there.
+            expect(promptTurn7).toContain('behavior-forcing question')
+        })
+
+        it('should append the terminal edge case instruction for turn 8+', () => {
+            const promptTurn8 = getSystemPrompt('chat', 8)
+            const promptTurn10 = getSystemPrompt('chat', 10)
+
+            expect(promptTurn8).toContain('The session has ended')
+            expect(promptTurn10).toContain('The session has ended')
         })
     })
 })

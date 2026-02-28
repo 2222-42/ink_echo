@@ -13,7 +13,8 @@ This specification covers the integration of turn-based tone variations in the M
 ### AC-1: Turn-based Prompt Tone `getSystemPrompt(turn)`
 - **Turn 1-4 (Normal):** The AI maintains a calm, empathetic tone.
 - **Turn 5-6 (Challenging):** The AI becomes "colder" and more challenging (突き放す), strictly probing the user to take responsibility for their thoughts without relying on the AI.
-- **Turn 7 (Final):** The AI is at its coldest. It MUST explicitly tell the user that this is the final turn and instruct them to write their thoughts or realizations on a physical card right now.
+- **Turn 7 (Final):** The AI is at its coldest. It MUST explicitly instruct the user that this is the final turn and to write their thoughts on a physical card right now. **Crucially, to satisfy `[SPEC-08]`, this response must STILL end with a question.** However, the question must be a "behavior-forcing question" (e.g., "Have you written it down on your card yet?").
+- **Turn 8+ (Edge Case):** If a user somehow bypasses the turn limit UI, the AI must simply output an error-like response: "The session has ended. Please upload your card."
 
 ### AC-2: `getSystemPrompt` signature update
 - `getSystemPrompt(context: 'chat' | 'vision', turn?: number)` must accept an optional `turn` parameter.

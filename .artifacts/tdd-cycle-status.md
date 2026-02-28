@@ -449,3 +449,15 @@ Phase: GREEN
 Tests run: 6
 Failed: 0
 Overall: PASS → ready for next
+## 2026-03-01T03:10:15+09:00
+File: tests/api/mistral/prompts.test.ts
+Phase: RED
+Tests run: 6
+Failed: should append the behavior-forcing question instruction for turn 7, should append the terminal edge case instruction for turn 8+
+Overall: FAIL → fix required
+## 2026-03-01T03:10:40+09:00
+File: tests/api/mistral/prompts.test.ts
+Phase: GREEN
+Tests run: 6
+Failed: 0
+Overall: PASS → ready for next
