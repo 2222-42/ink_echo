@@ -71,7 +71,7 @@ describe('Mistral Vision API', () => {
 
   it('should parse JSON response correctly', async () => {
     // Mock fetch to return a successful response with JSON
-    global.fetch = vi.fn(() =>
+    const mockFetch = vi.fn(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve({
@@ -85,6 +85,7 @@ describe('Mistral Vision API', () => {
       })
     )
 
+    global.fetch = mockFetch
     process.env.MISTRAL_API_KEY = 'test-key'
 
     await handler(mockRequest, mockResponse as any)
@@ -95,6 +96,13 @@ describe('Mistral Vision API', () => {
     expect(jsonCall.data).toHaveProperty('text')
     expect(jsonCall.data).toHaveProperty('themes')
     expect(jsonCall.data).toHaveProperty('keywords')
+    
+    // Verify that the image was properly included in the request
+    expect(mockFetch).toHaveBeenCalled()
+    const requestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body || '{}')
+    expect(requestBody.messages).toHaveLength(2) // system + user with image
+    expect(requestBody.messages[1].content).toHaveProperty('type', 'text')
+    expect(requestBody.messages[1].content).toHaveProperty('image_url')
   })
 
   it('should handle API errors gracefully', async () => {

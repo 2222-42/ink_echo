@@ -51,6 +51,25 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     ]
 
     // Call Mistral Vision API
+    // Note: Mistral's vision API requires the image to be sent as a base64 encoded string
+    // in the messages array with proper image URL format
+    const visionMessages = [
+      { role: 'system', content: systemPrompt },
+      ...messages,
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Analyze this handwritten note and extract the following information:' },
+          { 
+            type: 'image_url', 
+            image_url: { 
+              url: `data:image/png;base64,${image.split(',')[1] || image}` 
+            } 
+          }
+        ]
+      }
+    ]
+
     const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -59,7 +78,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       },
       body: JSON.stringify({
         model: 'pixtral-12b',
-        messages: mistralMessages,
+        messages: visionMessages,
         response_format: { type: 'json_object' },
         temperature: 0.7,
         max_tokens: 1000,
