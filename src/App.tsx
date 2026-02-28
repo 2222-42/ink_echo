@@ -6,6 +6,8 @@ import { MicButton } from './components/MicButton'
 import { ConversationLog } from './components/ConversationLog'
 import { EndMessageOverlay } from './components/EndMessageOverlay'
 import { UploadArea } from './components/UploadArea'
+import { isFeatureEnabled } from './lib/featureFlags'
+import { getHonestErrorMessage, getHonestErrorUIMessage } from '../api/mistral/fallback'
 import './App.css'
 
 function App() {
@@ -83,7 +85,30 @@ function App() {
         await playText(visionResponse.feedback, 1)
       } catch (error) {
         console.error('Vision API error:', error)
-        setErrorMessage('Failed to analyze the image. Please try uploading again.')
+        
+        // Check if fallback mode is enabled
+        const useFallback = isFeatureEnabled('ENABLE_VISION_FALLBACK')
+        
+        if (!useFallback) {
+          // Default behavior: Show honest error message and prompt retry
+          const honestErrorAudio = getHonestErrorMessage(history)
+          const honestErrorUI = getHonestErrorUIMessage(history)
+          
+          // Set UI error message
+          setErrorMessage(honestErrorUI)
+          
+          // Play audio feedback with honest error message
+          try {
+            await playText(honestErrorAudio, 1)
+          } catch (audioError) {
+            console.error('Failed to play error message:', audioError)
+          }
+          
+          // Track honest error metric
+          console.log('[Metrics] vision_failure_honest')
+        }
+        // If fallback is enabled, the backend already returned a fallback response
+        // and the resumeSessionWithVision was already called with the fallback feedback
       } finally {
         setIsUploading(false)
       }
