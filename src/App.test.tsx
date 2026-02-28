@@ -28,6 +28,7 @@ describe('App Integration', () => {
             isSessionEnded: false,
             isWaitingVision: false,
             addMessage: vi.fn(),
+            startUploadMode: vi.fn(),
             resumeSessionWithVision: vi.fn(),
         }
         vi.mocked(useConversation).mockReturnValue(mockUseConversation)
@@ -117,6 +118,11 @@ describe('App Integration', () => {
         it('handles image upload and vision api fallback', async () => {
             mockUseConversation.turns = 7
             mockUseConversation.isSessionEnded = true
+            mockUseConversation.startUploadMode = vi.fn(() => {
+                mockUseConversation.isSessionEnded = false
+                mockUseConversation.isWaitingVision = true
+            })
+            
             vi.mocked(mistralClient.vision).mockResolvedValue({
                 text: 'some test text',
                 themes: [],
@@ -126,7 +132,19 @@ describe('App Integration', () => {
                 feedback: 'Great reflection!'
             })
 
-            render(<App />)
+            const { rerender } = render(<App />)
+
+            // Click the upload button to show the upload area
+            const uploadButton = screen.getByRole('button', { name: /upload/i })
+            fireEvent.click(uploadButton)
+            
+            // Manually trigger state update by rerendering with updated mock
+            vi.mocked(useConversation).mockReturnValue({
+                ...mockUseConversation,
+                isSessionEnded: false,
+                isWaitingVision: true
+            })
+            rerender(<App />)
 
             const fileInput = screen.getByTestId('upload-input')
 

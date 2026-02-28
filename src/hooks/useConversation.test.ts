@@ -121,4 +121,27 @@ describe('useConversation', () => {
         expect(result.current.history).toHaveLength(2)
         expect(result.current.history[1]).toEqual({ role: 'assistant', content: 'Great picture!' })
     })
+
+    it('transitions to upload mode when startUploadMode is called', () => {
+        vi.spyOn(localStorageImpl, 'getSession').mockReturnValue({
+            id: 'mock-id',
+            turns: 7,
+            history: [{ role: 'user', content: 'hello' }],
+            isSessionEnded: true,
+            isWaitingVision: false
+        })
+
+        const { result } = renderHook(() => useConversation())
+
+        expect(result.current.isSessionEnded).toBe(true)
+        expect(result.current.isWaitingVision).toBe(false)
+
+        act(() => {
+            result.current.startUploadMode()
+        })
+
+        expect(result.current.isSessionEnded).toBe(false)
+        expect(result.current.isWaitingVision).toBe(true)
+        expect(result.current.turns).toBe(7) // turns should not change
+    })
 })

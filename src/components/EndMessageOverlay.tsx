@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw } from 'lucide-react';
+import { Upload } from 'lucide-react';
 
 export interface EndMessageOverlayProps {
     isVisible: boolean;
@@ -26,11 +26,11 @@ export const EndMessageOverlay: React.FC<EndMessageOverlayProps> = ({
 
                 <button
                     onClick={onRestart}
-                    className="flex items-center justify-center space-x-2 w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-600/30"
-                    aria-label="Restart session"
+                    className="flex items-center justify-center space-x-2 w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-600/30"
+                    aria-label="Upload handwritten card"
                 >
-                    <RefreshCw className="w-5 h-5" />
-                    <span>Restart</span>
+                    <Upload className="w-5 h-5" />
+                    <span>カードをアップロードする</span>
                 </button>
             </div>
         </div>

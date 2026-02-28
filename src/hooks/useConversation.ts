@@ -66,6 +66,14 @@ export const useConversation = () => {
         });
     };
 
+    const startUploadMode = () => {
+        setState((prevState) => ({
+            ...prevState,
+            isSessionEnded: false,
+            isWaitingVision: true,
+        }));
+    };
+
     const resumeSessionWithVision = (visionResult: { feedback: string }) => {
         setState((prevState) => {
             const newHistory = [
@@ -86,6 +94,7 @@ export const useConversation = () => {
     return {
         ...state,
         addMessage,
+        startUploadMode,
         resumeSessionWithVision
     };
 };
