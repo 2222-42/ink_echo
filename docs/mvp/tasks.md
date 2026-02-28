@@ -31,14 +31,22 @@
 **依存関係**: Track 1のモックUIと並行して着手可能 (API層には依存しない)
 **目的**: localStorage を使ったセッション保存、履歴管理、ターンカウントのビジネスロジックの実装
 
-- [ ] **Task 2.1**: ストレージインターフェースと実装 (`lib/storage.ts`)
+- [x] **Task 2.1**: ストレージインターフェースと実装 (`lib/storage.ts`)
   - 要求事項: `storage.test.ts` (Red) を作成。将来の拡張(Cloudflare KV等)を見据え、インターフェースに基づく `LocalStorageImpl` の保存(saveSession)と取得(getSession)をテスト。実装 (Green) -> Refactor。
-- [ ] **Task 2.2**: `useConversation` フック: 初期化と状態変数の管理
+  - 実装完了: `src/lib/storage.ts`, `src/lib/storage.test.ts`
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
+- [x] **Task 2.2**: `useConversation` フック: 初期化と状態変数の管理
   - 要求事項: `useConversation.test.ts` (Red) を作成。UUIDの生成処理、初期ターン0、初期メッセージ空配列であることを検証。実装 (Green) -> Refactor。
-- [ ] **Task 2.3**: `useConversation` フック: 対話進行と7ターン強制終了
+  - 実装完了: `src/hooks/useConversation.ts`, `src/hooks/useConversation.test.ts`, `src/types/conversation.ts`
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
+- [x] **Task 2.3**: `useConversation` フック: 対話進行と7ターン強制終了
   - 要求事項: ターンカウントの増加 (`turns++`)、履歴配列 (`history`) へのメッセージ追加機能を追加。7ターン目に達した時に終了フラグが立つロジックのテスト (Red) を追加。実装 (Green) -> Refactor。
-- [ ] **Task 2.4**: `useConversation` フック: 画像アップロード解析後の再開ロジック
+  - 実装完了: なし（Task 2.2 のフックに追記）
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
+- [x] **Task 2.4**: `useConversation` フック: 画像アップロード解析後の再開ロジック
   - 要求事項: Vision APIの解析結果（モック）を受け取り、履歴に肯定的なフィードバックを挿入し、継続フラグを立てるテスト (Red) を作成。実装 (Green) -> Refactor。
+  - 実装完了: なし（Task 2.2 のフックに追記）
+  - TDDサイクル: ✅ Red (テスト作成) → ✅ Green (実装) → ✅ Refactor (完了)
 
 ---
 
