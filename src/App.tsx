@@ -8,6 +8,7 @@ import { EndMessageOverlay } from './components/EndMessageOverlay'
 import { UploadArea } from './components/UploadArea'
 import { isFeatureEnabled, getMaxTurns } from './lib/featureFlags'
 import { getHonestErrorMessage, getHonestErrorUIMessage } from '../api/mistral/fallback'
+import { compressImage } from './lib/imageUtils'
 import './App.css'
 
 function App() {
@@ -73,48 +74,47 @@ function App() {
 
     setErrorMessage(null)
     setIsUploading(true)
-    const reader = new FileReader()
-    reader.onload = async () => {
-      const base64Image = reader.result as string
-      const base64Content = base64Image.split(',')[1] || base64Image
-      try {
-        const visionResponse = await mistralClient.vision({
-          image: `data:${file.type};base64,${base64Content}`,
-          messages: history
-        })
-        resumeSessionWithVision({ feedback: visionResponse.feedback })
-        await playText(visionResponse.feedback, 1)
-      } catch (error) {
-        console.error('Vision API error:', error)
 
-        // Check if fallback mode is enabled
-        const useFallback = isFeatureEnabled('ENABLE_VISION_FALLBACK')
+    try {
+      // Compress the image before uploading to avoid FUNCTION_PAYLOAD_TOO_LARGE
+      const base64Content = await compressImage(file, 1024)
 
-        if (!useFallback) {
-          // Default behavior: Show honest error message and prompt retry
-          const honestErrorAudio = getHonestErrorMessage(history)
-          const honestErrorUI = getHonestErrorUIMessage(history)
+      const visionResponse = await mistralClient.vision({
+        // We know from compressImage that it outputs image/jpeg
+        image: `data:image/jpeg;base64,${base64Content}`,
+        messages: history
+      })
+      resumeSessionWithVision({ feedback: visionResponse.feedback })
+      await playText(visionResponse.feedback, 1)
+    } catch (error) {
+      console.error('Vision API error:', error)
 
-          // Set UI error message
-          setErrorMessage(honestErrorUI)
+      // Check if fallback mode is enabled
+      const useFallback = isFeatureEnabled('ENABLE_VISION_FALLBACK')
 
-          // Play audio feedback with honest error message
-          try {
-            await playText(honestErrorAudio, 1)
-          } catch (audioError) {
-            console.error('Failed to play error message:', audioError)
-          }
+      if (!useFallback) {
+        // Default behavior: Show honest error message and prompt retry
+        const honestErrorAudio = getHonestErrorMessage(history)
+        const honestErrorUI = getHonestErrorUIMessage(history)
 
-          // Track honest error metric
-          console.log('[Metrics] vision_failure_honest')
+        // Set UI error message
+        setErrorMessage(honestErrorUI)
+
+        // Play audio feedback with honest error message
+        try {
+          await playText(honestErrorAudio, 1)
+        } catch (audioError) {
+          console.error('Failed to play error message:', audioError)
         }
-        // If fallback is enabled, the backend already returned a fallback response
-        // and the resumeSessionWithVision was already called with the fallback feedback
-      } finally {
-        setIsUploading(false)
+
+        // Track honest error metric
+        console.log('[Metrics] vision_failure_honest')
       }
+      // If fallback is enabled, the backend already returned a fallback response
+      // and the resumeSessionWithVision was already called with the fallback feedback
+    } finally {
+      setIsUploading(false)
     }
-    reader.readAsDataURL(file)
   }
 
   const handleMicToggle = () => {
