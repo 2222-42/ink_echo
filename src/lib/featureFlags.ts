@@ -31,7 +31,10 @@ function getFeatureFlag(flagName: keyof FeatureFlags): boolean {
   // Check import.meta.env (Vite's way of accessing environment variables)
   // Environment variables must be prefixed with VITE_ to be exposed to client-side code
   if (typeof import.meta !== 'undefined' && import.meta.env) {
-    const envValue = import.meta.env[`VITE_${flagName}`]
+    let envValue: string | undefined
+    if (flagName === 'ENABLE_VISION_FALLBACK') {
+      envValue = import.meta.env.VITE_ENABLE_VISION_FALLBACK
+    }
     if (envValue !== undefined) {
       return envValue === 'true' || envValue === '1'
     }
@@ -79,7 +82,10 @@ export function isFeatureEnabled(flagName: keyof FeatureFlags): boolean {
 function getConfigValue(configName: keyof AppConfig): number {
   // Check import.meta.env (Vite's way of accessing environment variables)
   if (typeof import.meta !== 'undefined' && import.meta.env) {
-    const envValue = import.meta.env[`VITE_${configName}`]
+    let envValue: string | undefined
+    if (configName === 'MAX_TURNS') {
+      envValue = import.meta.env.VITE_MAX_TURNS
+    }
     if (envValue !== undefined) {
       const parsed = parseInt(envValue, 10)
       if (!isNaN(parsed) && parsed > 0) {
