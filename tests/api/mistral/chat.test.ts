@@ -65,6 +65,34 @@ describe('Mistral Chat API', () => {
     expect(mockResponse.setHeader).toHaveBeenCalled()
   })
 
+  it('should include turn-specific instructions when turn >= 5', async () => {
+    // Mock fetch to track the sent payload
+    const fetchMock = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          choices: [{
+            message: { content: 'Test response', role: 'assistant' },
+          }],
+        }),
+      } as unknown as Response)
+    )
+    global.fetch = fetchMock
+
+    process.env.MISTRAL_API_KEY = 'test-key'
+    mockRequest.body.turn = 7
+
+    await handler(mockRequest, mockResponse as any)
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const callArgs = fetchMock.mock.calls[0] as unknown as [RequestInfo | URL, RequestInit | undefined]
+    const requestOptions = callArgs[1] || {}
+    const bodyText = (requestOptions.body || '') as string
+
+    // Expect the system prompt inside the body to contain the final turn instruction
+    expect(bodyText).toContain('physical card right now')
+  })
+
   it('should handle API errors gracefully', async () => {
     // Mock fetch to return an error
     global.fetch = vi.fn(() =>

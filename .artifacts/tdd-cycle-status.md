@@ -425,3 +425,27 @@ Phase: GREEN
 Tests run: 2
 Failed: none
 Overall: PASS -> ready for next
+## 2026-03-01T02:47:37+09:00
+File: tests/api/mistral/prompts.test.ts
+Phase: RED
+Tests run: 5
+Failed: should append a slightly colder instruction for turn 5 and 6, should append the explicitly final instruction for turn 7
+Overall: FAIL → fix required
+## 2026-03-01T02:48:14+09:00
+File: tests/api/mistral/prompts.test.ts
+Phase: GREEN
+Tests run: 5
+Failed: 0
+Overall: PASS → ready for next
+## 2026-03-01T02:49:15+09:00
+File: tests/api/mistral/chat.test.ts
+Phase: RED
+Tests run: 6
+Failed: should include turn-specific instructions when turn >= 5
+Overall: FAIL → fix required
+## 2026-03-01T02:49:45+09:00
+File: tests/api/mistral/chat.test.ts
+Phase: GREEN
+Tests run: 6
+Failed: 0
+Overall: PASS → ready for next

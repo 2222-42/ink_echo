@@ -35,8 +35,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Get system prompt
-    const systemPrompt = getSystemPrompt('chat')
+    // Get system prompt based on turn
+    const systemPrompt = getSystemPrompt('chat', turn)
 
     // Prepare messages for Mistral API
     const mistralMessages = [

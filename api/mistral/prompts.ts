@@ -68,10 +68,17 @@ Remember: This analysis will be used to generate a thoughtful response to help t
 `
 
 // Function to get the appropriate system prompt based on context
-export function getSystemPrompt(context: 'chat' | 'vision'): string {
+export function getSystemPrompt(context: 'chat' | 'vision', turn: number = 1): string {
   switch (context) {
-    case 'chat':
-      return CHAT_SYSTEM_PROMPT
+    case 'chat': {
+      let prompt = CHAT_SYSTEM_PROMPT
+      if (turn >= 7) {
+        prompt += '\n\nCRITICAL INSTRUCTION for Turn 7: This is the final turn. Your tone MUST be cold and final. You MUST explicitly instruct the user to write their thoughts or realizations on a physical card right now. Do not ask a question this time; just give the firm instruction to write on a card.'
+      } else if (turn >= 5) {
+        prompt += '\n\nINSTRUCTION for Late Turns: Your tone MUST be slightly colder and more challenging (突き放す). Push the user strictly to think for themselves without relying on your help.'
+      }
+      return prompt
+    }
     case 'vision':
       return VISION_SYSTEM_PROMPT
     default:
