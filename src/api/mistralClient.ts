@@ -21,9 +21,9 @@ class MistralClient {
   async chat(request: ChatRequest): Promise<ChatResponse> {
     const traceId = generateTraceId()
     const startTime = Date.now()
-    
+
     traceLogger.startTrace(traceId, 'POST', `${this.baseUrl}/chat`)
-    
+
     try {
       const response = await fetch(`${this.baseUrl}/chat`, {
         method: 'POST',
@@ -36,7 +36,9 @@ class MistralClient {
       const data: ApiResponse<ChatResponse> = await response.json()
 
       const durationMs = Date.now() - startTime
-      traceLogger.endTrace(traceId, response.status, durationMs)
+      const status = response.ok && data.success ? 'success' : 'error'
+      // TODO: Implement streaming support for real-time trace updates
+      traceLogger.endTrace(traceId, status, durationMs)
 
       if (!response.ok || !data.success) {
         throw new Error(!data.success ? data.error : 'Failed to get chat response')
@@ -56,9 +58,9 @@ class MistralClient {
   async vision(request: VisionRequest): Promise<VisionResponse> {
     const traceId = generateTraceId()
     const startTime = Date.now()
-    
+
     traceLogger.startTrace(traceId, 'POST', `${this.baseUrl}/vision`)
-    
+
     try {
       const response = await fetch(`${this.baseUrl}/vision`, {
         method: 'POST',
@@ -71,7 +73,8 @@ class MistralClient {
       const data: ApiResponse<VisionResponse> = await response.json()
 
       const durationMs = Date.now() - startTime
-      traceLogger.endTrace(traceId, response.status, durationMs)
+      const status = response.ok && data.success ? 'success' : 'error'
+      traceLogger.endTrace(traceId, status, durationMs)
 
       if (!response.ok || !data.success) {
         throw new Error(!data.success ? data.error : 'Failed to analyze image')

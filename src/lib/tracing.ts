@@ -28,7 +28,7 @@ export interface TraceLogger {
   /** Log the start of a request */
   startTrace(traceId: string, method: string, path: string): void
   /** Log the end of a request */
-  endTrace(traceId: string, statusCode: number, durationMs: number): void
+  endTrace(traceId: string, status: "success" | "error", durationMs: number): void
   /** Log an error */
   error(traceId: string, error: Error | string): void
 }
@@ -66,7 +66,7 @@ class MockTraceLogger implements TraceLogger {
     // Remove traces older than 5 minutes
     const now = Date.now()
     const maxAge = 5 * 60 * 1000 // 5 minutes
-    
+
     for (const [traceId, metadata] of this.traces.entries()) {
       if (metadata.timestamp) {
         const traceAge = now - new Date(metadata.timestamp).getTime()
@@ -75,7 +75,7 @@ class MockTraceLogger implements TraceLogger {
         }
       }
     }
-    
+
     // If still too many traces, remove oldest ones
     if (this.traces.size > this.MAX_TRACES) {
       const tracesToRemove = this.traces.size - this.MAX_TRACES
@@ -101,13 +101,13 @@ class MockTraceLogger implements TraceLogger {
     console.log('[TRACE:START]', JSON.stringify(metadata, null, 2))
   }
 
-  endTrace(traceId: string, statusCode: number, durationMs: number): void {
+  endTrace(traceId: string, status: "success" | "error", durationMs: number): void {
     const startMetadata = this.traces.get(traceId)
     const metadata: TraceMetadata = {
       ...startMetadata,
       traceId,
       timestamp: startMetadata?.timestamp || new Date().toISOString(),
-      statusCode,
+      metadata: { ...startMetadata?.metadata, status },
       durationMs,
     }
     this.log(metadata)

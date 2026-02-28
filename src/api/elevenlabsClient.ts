@@ -25,9 +25,9 @@ class ElevenLabsClient {
   async speak(request: TTSSpeakRequest): Promise<Blob> {
     const traceId = generateTraceId()
     const startTime = Date.now()
-    
+
     traceLogger.startTrace(traceId, 'POST', `${this.baseUrl}/tts`)
-    
+
     try {
       const response = await fetch(`${this.baseUrl}/tts`, {
         method: 'POST',
@@ -38,7 +38,8 @@ class ElevenLabsClient {
       })
 
       const durationMs = Date.now() - startTime
-      traceLogger.endTrace(traceId, response.status, durationMs)
+      const status = response.ok ? 'success' : 'error'
+      traceLogger.endTrace(traceId, status, durationMs)
 
       if (!response.ok) {
         const errorData: ApiResponse<never> = await response.json().catch(() => ({ success: false as const, error: '' }))

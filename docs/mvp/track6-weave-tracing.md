@@ -28,7 +28,7 @@ The `withTracing` middleware wraps all API endpoints and automatically logs:
 
 - **Request start**: HTTP method, path, timestamp, unique trace ID
 - **Request end**: Status code, duration, success/error status
-- **Errors**: Error messages and stack traces
+- **Errors**: Error messages
 
 **Usage:**
 
@@ -87,7 +87,8 @@ traceLogger.startTrace(traceId, 'POST', '/api/mistral/chat')
 try {
   const response = await fetch('/api/mistral/chat', { ... })
   const durationMs = Date.now() - startTime
-  traceLogger.endTrace(traceId, response.status, durationMs)
+  const status = response.ok ? 'success' : 'error'
+  traceLogger.endTrace(traceId, status, durationMs)
 } catch (error) {
   traceLogger.error(traceId, error)
 }
@@ -139,6 +140,9 @@ All tests pass successfully (13/13 tests passing).
 ## Future W&B Weave Integration
 
 The current implementation uses a mock logger that outputs to console. To integrate with W&B Weave:
+
+- **TODO (Optional):** Implement token count logging for observability in the Future W&B Weave Integration.
+- **TODO (Optional):** Ensure backend supports tracking streaming updates and real-time trace events.
 
 ### Backend Integration
 
