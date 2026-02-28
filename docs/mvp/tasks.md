@@ -49,7 +49,7 @@
 - [ ] **Task 3.1**: Vercel Serverless Functions の基盤作成と疎通確認
   - 要求事項: `api/hello.ts` などのダミー関数を作成し、ローカル（`vercel dev`等）でエコーサーバーのルーティングとレスポンスが動作することを検証する。
 - [ ] **Task 3.2**: Mistral API (Chat & Vision) プロキシの実装 (`api/mistral/chat.ts`, `api/mistral/vision.ts`)
-  - 要求事項: 環境変数からAPIキーを取得し、フロントエンドからのテキストやBase64画像を受け取ってMistralへプロキシする処理。レスポンスの適切なパース機構とエラーハンドリングの実装・テスト。
+  - 要求事項: 環境変数からAPIキーを取得し、Mistralへプロキシする処理。**システムプロンプト（[SPEC-08]準拠のルール等）はプロンプト・インジェクション対策としてサーバー側（`api/mistral/prompts.ts`等）に秘匿・管理する**こと。Vision解析時は `response_format: { type: "json_object" }` を指定し、手書き文字・テーマ等の構造化データ抽出を担保する。レスポンスの適切なパース機構とエラーハンドリングの実装・テスト。
 - [ ] **Task 3.3**: ElevenLabs TTS API プロキシの実装 (`api/elevenlabs/tts.ts`)
   - 要求事項: 音声合成をプロキシする関数。フロントからテキストとTurnパラメータ（またはTone指定）を受け取り設定を変換して呼び出し、音声バイナリストリームをフロントエンドに返す処理の実装・テスト。
 
@@ -60,7 +60,7 @@
 **目的**: バックエンド関数 (`/api/`) へリクエストを送るためのReact側クライアントラッパーの実装と、音声入力周りの制御の実装。
 
 - [ ] **Task 4.1**: Mistral API クライアントラッパー (`src/api/mistralClient.ts`)
-  - 要求事項: `mistralClient.test.ts` (Red) を作成。`/api/mistral/chat` や `/api/mistral/vision` へFetchし、パース結果を受け取るテスト。システムプロンプトの付与はバックエンド側に任せるかフロントから送付するかを明確にし実装 (Green) -> Refactor。
+  - 要求事項: `mistralClient.test.ts` (Red) を作成。`/api/mistral/chat` や `/api/mistral/vision` へFetchし、パース結果を受け取るテスト。システムプロンプトの注入はバックエンドで行うため、フロントからはユーザー入力と履歴のみを送信する設計とし、実装 (Green) -> Refactor。
 - [ ] **Task 4.2**: ElevenLabs API クライアントラッパー (`src/api/elevenlabsClient.ts`)
   - 要求事項: `elevenlabsClient.test.ts` (Red)作成。`/api/elevenlabs/tts` を呼び出し、音声データを取得・再生する機構のテスト。実装 (Green) -> Refactor。
 - [ ] **Task 4.3**: `useAudio` フックの実装 (音声入出力管理)
