@@ -29,14 +29,14 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // SPEC-20: Turns 5-7: more serious, urgent tone
     let stability = 0.5
     let style = 0.3
-    
+
     if (turn >= 5 && turn <= 7) {
       stability = 0.45
       style = 0.55
     }
 
-    // Use default Japanese voice or specified voice
-    const actualVoiceId = voice_id || '21m00Tcm4TlvDq8ikWAM' // Japanese female voice
+    // Use default English voice or specified voice
+    const actualVoiceId = voice_id || '21m00Tcm4TlvDq8ikWAM' // English female voice (Rachel)
 
     // Call ElevenLabs TTS API
     const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + actualVoiceId, {
@@ -64,7 +64,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // Stream the audio response back to client
     res.setHeader('Content-Type', 'audio/mpeg')
     res.setHeader('Cache-Control', 'no-cache')
-    
+
     // Pipe the response stream
     const audioStream = response.body
     if (!audioStream) {
@@ -73,7 +73,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Create a transform stream to handle the audio data
     const reader = audioStream.getReader()
-    
+
     while (true) {
       const { done, value } = await reader.read()
       if (done) break

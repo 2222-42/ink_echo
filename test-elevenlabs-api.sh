@@ -58,12 +58,12 @@ else
     exit 1
 fi
 
-# Check for default Japanese voice
-echo "Checking default voice configuration..."
+# Check for default English voice
+echo "Checking default English voice configuration..."
 if grep -q "21m00Tcm4TlvDq8ikWAM" api/elevenlabs/tts.ts; then
-    echo "✓ Default Japanese voice configured"
+    echo "✓ Default English voice configured"
 else
-    echo "ERROR: Default Japanese voice not configured"
+    echo "ERROR: Default English voice not configured"
     exit 1
 fi
 
