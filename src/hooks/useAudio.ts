@@ -17,6 +17,9 @@ export function useAudio(options: UseAudioOptions = {}) {
   // Ref to debounce identical final transcripts
   const lastTranscriptRef = useRef<string | null>(null)
 
+  // Ref to track consecutive network errors
+  const networkErrorRetriesRef = useRef<number>(0)
+
   useEffect(() => {
     onTranscriptRef.current = onTranscript
     onErrorRef.current = onError
@@ -69,6 +72,9 @@ export function useAudio(options: UseAudioOptions = {}) {
         }
 
         const displayTranscript = finalTranscript || interimTranscript
+        if (displayTranscript) {
+          networkErrorRetriesRef.current = 0 // Reset retries on successful recognition
+        }
         setState(prev => ({ ...prev, transcript: displayTranscript }))
 
         // Invoke callback on FINAL results
@@ -87,16 +93,21 @@ export function useAudio(options: UseAudioOptions = {}) {
 
         // Handle spurious network errors by retrying under the hood
         if (event.error === 'network' && isRecordingRef.current) {
-          console.warn('Network error encountered, attempting to reconnect in 1s...')
-          // We do NOT set isRecording: false here so the UI doesn't drop
-          setTimeout(() => {
-            if (isRecordingRef.current && recognitionRef.current) {
-              try {
-                recognitionRef.current.start()
-              } catch (e) { /* ignore */ }
-            }
-          }, 1000)
-          return
+          if (networkErrorRetriesRef.current < 3) {
+            networkErrorRetriesRef.current += 1
+            console.warn(`Network error encountered, attempting to reconnect in 1s... (Retry ${networkErrorRetriesRef.current}/3)`)
+            // We do NOT set isRecording: false here so the UI doesn't drop
+            setTimeout(() => {
+              if (isRecordingRef.current && recognitionRef.current) {
+                try {
+                  recognitionRef.current.start()
+                } catch (e) { /* ignore */ }
+              }
+            }, 1000)
+            return
+          } else {
+            console.error('Max network retries reached. Bailing out.')
+          }
         }
 
         setState(prev => ({ ...prev, isRecording: false, isListening: false }))
@@ -136,6 +147,7 @@ export function useAudio(options: UseAudioOptions = {}) {
     try {
       recognitionRef.current.start()
       lastTranscriptRef.current = null // Reset debounce tracker on new recording
+      networkErrorRetriesRef.current = 0 // Reset retries on intentional start
       setState(prev => ({ ...prev, isRecording: true, isListening: true, transcript: '' }))
       return true
     } catch (error) {
@@ -152,13 +164,6 @@ export function useAudio(options: UseAudioOptions = {}) {
     if (recognitionRef.current) {
       recognitionRef.current.stop()
       setState(prev => ({ ...prev, isRecording: false, isListening: false }))
-
-      // If we manually stopped, we might have some pending transcript
-      const pendingText = transcriptRef.current.trim()
-      if (pendingText && pendingText !== lastTranscriptRef.current) {
-        lastTranscriptRef.current = pendingText
-        onTranscriptRef.current?.(pendingText)
-      }
     }
     return transcriptRef.current
   }, [])
