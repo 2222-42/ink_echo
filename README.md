@@ -38,6 +38,49 @@ Ink Echo (インクエコー)
 - **Voice**: ElevenLabs TTS（日本語声、感情パラメータでトーン調整）  
 - **STT**: Web Speech API（ブラウザネイティブ）
 
+## Feature Flags（機能フラグ）
+
+### ENABLE_VISION_FALLBACK
+Vision API失敗時のフォールバック動作を制御します。
+
+**デフォルト値**: `false` （正直にエラーを伝え、再試行を促す）
+
+**設定方法**:
+```bash
+# 環境変数として設定
+ENABLE_VISION_FALLBACK=true
+
+# または Vite プレフィックス付き
+VITE_ENABLE_VISION_FALLBACK=true
+```
+
+**動作**:
+- **OFF（デフォルト）**: Vision API失敗時に正直なエラーメッセージを表示し、再アップロードを促す
+  - ユーザーに透明性を提供
+  - 再チャレンジを促進
+  - 推奨設定（哲学に沿った誠実な対応）
+
+- **ON**: Vision API失敗時にフォールバックテンプレートを使用した共感的応答を返す
+  - Graceful degradation
+  - セッションが止まらない
+  - 深い解釈は行わず、ユーザーの主体性を維持
+  - テンプレートベースの質問返し
+
+**メトリクス**:
+- `vision_failure_honest`: フラグOFF時の失敗数
+- `vision_failure_fallback_used`: フラグON時のフォールバック使用数
+
+**運用方針**:
+1. 初期値: false（正直モード）
+2. 失敗率が高い場合（30%以上）のみ一時的にON
+3. 内部テスター検証後、徐々にロールアウト
+
+**実装位置**:
+- サーバーサイド: `/api/mistral/vision.ts`
+- クライアントサイド: `/src/App.tsx`
+- フラグ管理: `/src/lib/featureFlags.ts`
+- フォールバック生成: `/api/mistral/fallback.ts`
+
 ## UI / ワイヤーフレームの要点（モバイルファースト）
 - メイン画面: 会話ログ（スクロール） + 下部固定マイクボタン  
 - 7ターン終了: 半透明オーバーレイ（「紙に書いてアップロード」促し + 大きなボタン）  

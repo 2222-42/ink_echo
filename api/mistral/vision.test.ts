@@ -100,9 +100,10 @@ describe('Mistral Vision API', () => {
     // Verify that the image was properly included in the request
     expect(mockFetch).toHaveBeenCalled()
     const requestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body || '{}')
-    expect(requestBody.messages).toHaveLength(2) // system + user with image
-    expect(requestBody.messages[1].content).toHaveProperty('type', 'text')
-    expect(requestBody.messages[1].content).toHaveProperty('image_url')
+    expect(requestBody.messages).toHaveLength(3) // system + history message + user with image
+    expect(requestBody.messages[2].content).toBeInstanceOf(Array)
+    expect(requestBody.messages[2].content[0]).toHaveProperty('type', 'text')
+    expect(requestBody.messages[2].content[1]).toHaveProperty('image_url')
   })
 
   it('should handle API errors gracefully', async () => {
@@ -118,5 +119,57 @@ describe('Mistral Vision API', () => {
 
     await handler(mockRequest, mockResponse as any)
     expect(mockResponse.status).toHaveBeenCalledWith(500)
+  })
+
+  it('should use fallback mode when feature flag is enabled', async () => {
+    // Mock fetch to return an error
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Vision API error' }),
+      })
+    )
+
+    process.env.MISTRAL_API_KEY = 'test-key'
+    process.env.ENABLE_VISION_FALLBACK = 'true'
+
+    await handler(mockRequest, mockResponse as any)
+    
+    // Should return 200 with fallback response instead of 500 error
+    expect(mockResponse.status).toHaveBeenCalledWith(200)
+    
+    // Check that response contains feedback field
+    const jsonCall = mockResponse.json.mock.calls[0][0]
+    expect(jsonCall.success).toBe(true)
+    expect(jsonCall.data).toHaveProperty('feedback')
+    expect(typeof jsonCall.data.feedback).toBe('string')
+    expect(jsonCall.data.feedback.length).toBeGreaterThan(0)
+    
+    // Clean up
+    delete process.env.ENABLE_VISION_FALLBACK
+  })
+
+  it('should return error when feature flag is disabled (default)', async () => {
+    // Mock fetch to return an error
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Vision API error' }),
+      })
+    )
+
+    process.env.MISTRAL_API_KEY = 'test-key'
+    // Explicitly disable fallback
+    delete process.env.ENABLE_VISION_FALLBACK
+
+    await handler(mockRequest, mockResponse as any)
+    
+    // Should return 500 error
+    expect(mockResponse.status).toHaveBeenCalledWith(500)
+    
+    // Check that response is an error
+    const jsonCall = mockResponse.json.mock.calls[0][0]
+    expect(jsonCall.success).toBe(false)
+    expect(jsonCall).toHaveProperty('error')
   })
 })

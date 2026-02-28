@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { withCors, withErrorHandling, withRequestValidation } from '../middleware.js'
 import { API_CONFIG, type ApiResponse } from '../config.js'
 import { getSystemPrompt } from './prompts.js'
+import { generateFallbackText } from './fallback.js'
 
 interface VisionRequest {
   image: string // Base64 encoded image
@@ -112,12 +113,47 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(200).json(apiResponse)
   } catch (error) {
     console.error('Vision API Error:', error)
-    const errorResponse: ApiResponse<never> = {
-      error: error instanceof Error ? error.message : 'Failed to process vision request',
-      code: API_CONFIG.ERROR_CODES.API_ERROR,
-      success: false,
+    
+    // Check if fallback mode is enabled via environment variable
+    const useFallback = process.env.ENABLE_VISION_FALLBACK === 'true' || 
+                        process.env.ENABLE_VISION_FALLBACK === '1'
+    
+    if (useFallback) {
+      // Graceful degradation: return fallback text instead of error
+      console.log('[Vision Fallback] Using fallback response due to API failure')
+      
+      const fallbackText = generateFallbackText(messages, image)
+      
+      // Track that fallback was used (for metrics/monitoring)
+      console.log('[Metrics] vision_failure_fallback_used', {
+        messageCount: messages.length,
+        errorType: error instanceof Error ? error.message : 'unknown',
+      })
+      
+      // Return a successful response with fallback feedback
+      const fallbackResponse: ApiResponse<{ feedback: string }> = {
+        data: {
+          feedback: fallbackText,
+          // Note: Other fields like text, themes, keywords are omitted in fallback mode
+        },
+        success: true,
+      }
+      
+      res.status(200).json(fallbackResponse)
+    } else {
+      // Default behavior: return honest error message
+      console.log('[Metrics] vision_failure_honest', {
+        messageCount: messages.length,
+        errorType: error instanceof Error ? error.message : 'unknown',
+      })
+      
+      const errorResponse: ApiResponse<never> = {
+        error: error instanceof Error ? error.message : 'Failed to process vision request',
+        code: API_CONFIG.ERROR_CODES.API_ERROR,
+        success: false,
+      }
+      res.status(500).json(errorResponse)
     }
-    res.status(500).json(errorResponse)
   }
 }
 
