@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useAudio } from './useAudio'
 
 /**
@@ -12,6 +12,8 @@ import { useAudio } from './useAudio'
  * 5. It should notify onError on non-network errors.
  * 6. It should limit 'network' error retries to 3 times to prevent infinite loops.
  * 7. It should clear any pending transcripts when a recording is manually stopped.
+ * 8. It should prevent spaces from infinitely accumulating when concatenating final transcripts.
+ * 9. It should clear the silence timeout when `onError` occurs.
  */
 
 // Track instances
@@ -37,9 +39,12 @@ class MockSpeechRecognition {
 describe('useAudio', () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        mockInstances = []
         vi.stubGlobal('SpeechRecognition', MockSpeechRecognition)
         vi.stubGlobal('webkitSpeechRecognition', MockSpeechRecognition)
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
     })
 
     it('triggers onTranscript after 3 seconds of silence', () => {
@@ -93,8 +98,6 @@ describe('useAudio', () => {
 
         // Expect onTranscript TO BE called with trimmed text
         expect(onTranscript).toHaveBeenCalledWith('hello world')
-
-        vi.useRealTimers()
     })
 
     it('accumulates multiple final results before the silence timeout', () => {
@@ -113,7 +116,7 @@ describe('useAudio', () => {
             recognition.onresult({
                 resultIndex: 0,
                 results: [
-                    Object.assign([{ transcript: 'first part' }], { isFinal: true })
+                    Object.assign([{ transcript: '  first part  ' }], { isFinal: true })
                 ]
             } as any)
         })
@@ -128,7 +131,7 @@ describe('useAudio', () => {
             recognition.onresult({
                 resultIndex: 0,
                 results: [
-                    Object.assign([{ transcript: 'second part' }], { isFinal: true })
+                    Object.assign([{ transcript: '  second part  ' }], { isFinal: true })
                 ]
             } as any)
         })
@@ -144,10 +147,44 @@ describe('useAudio', () => {
             vi.advanceTimersByTime(100)
         })
 
-        // Expect onTranscript to be called with combined text
+        // Expect onTranscript to be called with combined text, WITHOUT accumulated spaces
         expect(onTranscript).toHaveBeenCalledWith('first part second part')
+    })
 
-        vi.useRealTimers()
+    it('clears silence timeout on error', () => {
+        vi.useFakeTimers()
+        const onTranscript = vi.fn()
+        const onError = vi.fn()
+        const { result } = renderHook(() => useAudio({ onTranscript, onError }))
+
+        act(() => {
+            result.current.startRecording()
+        })
+
+        const recognition = mockInstances[0]
+
+        // Send a final result
+        act(() => {
+            recognition.onresult({
+                resultIndex: 0,
+                results: [
+                    Object.assign([{ transcript: 'hello' }], { isFinal: true })
+                ]
+            } as any)
+        })
+
+        // Trigger an error
+        act(() => {
+            recognition.onerror({ error: 'not-allowed' } as any)
+        })
+
+        // Wait 3 seconds
+        act(() => {
+            vi.advanceTimersByTime(3100)
+        })
+
+        // Assert onTranscript wasn't called from the ghost timeout
+        expect(onTranscript).not.toHaveBeenCalled()
     })
 
     it('does NOT trigger onTranscript with remaining transcript when manually stopped', () => {
@@ -231,8 +268,6 @@ describe('useAudio', () => {
 
         // Should have attempted to start again
         expect(recognition.start).toHaveBeenCalledTimes(2)
-
-        vi.useRealTimers()
     })
 
     it('calls onError on non-network errors and stops recording', () => {
@@ -284,6 +319,8 @@ describe('useAudio', () => {
         // Trigger the 4th consecutive network error
         act(() => {
             recognition.onerror({ error: 'network' } as any)
+        })
+        act(() => {
             vi.advanceTimersByTime(1100)
         })
 
@@ -291,8 +328,6 @@ describe('useAudio', () => {
         expect(onError).toHaveBeenCalledWith(expect.any(Error))
         expect(onError.mock.calls[0][0].message).toBe('network')
         expect(result.current.isRecording).toBe(false)
-
-        vi.useRealTimers()
     })
 
     it('clears timeout when manually stopped', () => {
@@ -328,7 +363,5 @@ describe('useAudio', () => {
 
         // Should NOT have called onTranscript because timer was cleared
         expect(onTranscript).not.toHaveBeenCalled()
-
-        vi.useRealTimers()
     })
 })

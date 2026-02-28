@@ -84,7 +84,12 @@ export function useAudio(options: UseAudioOptions = {}) {
         }
 
         if (newFinalTranscript) {
-          transcriptBufferRef.current += newFinalTranscript
+          const cleaned = newFinalTranscript.trim()
+          if (cleaned) {
+            transcriptBufferRef.current = transcriptBufferRef.current
+              ? transcriptBufferRef.current + ' ' + cleaned
+              : cleaned
+          }
         }
 
         const displayTranscript = (transcriptBufferRef.current + interimTranscript).trimStart()
@@ -111,6 +116,13 @@ export function useAudio(options: UseAudioOptions = {}) {
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error)
+
+        // Clear timeouts on error to prevent ghost transcription events
+        if (silenceTimeoutRef.current) {
+          clearTimeout(silenceTimeoutRef.current)
+          silenceTimeoutRef.current = null
+        }
+        transcriptBufferRef.current = ''
 
         // Handle spurious network errors by retrying under the hood
         if (event.error === 'network' && isRecordingRef.current) {
