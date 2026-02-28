@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useConversation } from './hooks/useConversation'
 import { useAudio } from './hooks/useAudio'
 import { mistralClient } from './api/mistralClient'
@@ -124,6 +124,13 @@ function App() {
       startRecording()
     }
   }
+
+  // Force stop recording if we enter the end of session or upload phase
+  useEffect(() => {
+    if ((isSessionEnded || isWaitingVision) && isRecording) {
+      stopRecording()
+    }
+  }, [isSessionEnded, isWaitingVision, isRecording, stopRecording])
 
   return (
     <div className="app-container max-w-2xl mx-auto p-4 flex flex-col items-center gap-6">

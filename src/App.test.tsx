@@ -104,7 +104,12 @@ describe('App Integration', () => {
     })
 
     describe('End Turn Flow', () => {
-        it('shows EndMessageOverlay and UploadArea on 7th turn', () => {
+        it('shows EndMessageOverlay and UploadArea on 7th turn and stops recording', () => {
+            // Setup initial state: User is recording right before turn 7
+            mockUseAudio.isRecording = true
+            vi.mocked(useAudio).mockReturnValue(mockUseAudio)
+
+            // Simulate transition to turn 7
             mockUseConversation.turns = 7
             mockUseConversation.isSessionEnded = true
 
@@ -112,9 +117,13 @@ describe('App Integration', () => {
 
             // Should show end message
             expect(screen.getByText(/Your 7 turns are complete/)).toBeInTheDocument()
+
             // MicButton should be disabled
-            const micButton = screen.getByRole('button', { name: /Start recording/i })
+            const micButton = screen.getByRole('button', { name: /recording/i })
             expect(micButton).toBeDisabled()
+
+            // stopRecording MUST be called to turn off microphone automatically
+            expect(mockUseAudio.stopRecording).toHaveBeenCalled()
         })
     })
 
