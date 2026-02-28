@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import ElevenLabsClient, { elevenlabsClient } from './elevenlabsClient'
+import ElevenLabsClient, { elevenlabsClient, getToneParams } from './elevenlabsClient'
 import type { TTSSpeakRequest } from './types'
 
 describe('ElevenLabsClient', () => {
@@ -10,13 +10,13 @@ describe('ElevenLabsClient', () => {
     client = new ElevenLabsClient()
     mockFetch = vi.fn()
     global.fetch = mockFetch
-    
+
     // Mock Audio constructor
     global.Audio = vi.fn().mockImplementation(() => ({
       play: vi.fn().mockResolvedValue(undefined),
       src: '',
     }))
-    
+
     // Mock URL methods
     global.URL.createObjectURL = vi.fn(() => 'mock-audio-url')
     global.URL.revokeObjectURL = vi.fn()
@@ -112,6 +112,39 @@ describe('ElevenLabsClient', () => {
   describe('singleton', () => {
     it('should provide singleton instance', () => {
       expect(elevenlabsClient).toBeInstanceOf(ElevenLabsClient)
+    })
+  })
+
+  describe('getToneParams', () => {
+    it('returns calm params for turns 1-4', () => {
+      expect(getToneParams(1)).toEqual({ stability: 0.7, style: 0.3 })
+      expect(getToneParams(4)).toEqual({ stability: 0.7, style: 0.3 })
+    })
+
+    it('returns mid params for turns 5-6', () => {
+      expect(getToneParams(5)).toEqual({ stability: 0.55, style: 0.45 })
+      expect(getToneParams(6)).toEqual({ stability: 0.55, style: 0.45 })
+    })
+
+    it('returns emotional params for turn 7+', () => {
+      expect(getToneParams(7)).toEqual({ stability: 0.45, style: 0.55 })
+      expect(getToneParams(10)).toEqual({ stability: 0.45, style: 0.55 })
+    })
+  })
+
+  describe('playAudio tone injection', () => {
+    it('sends stability and style in the request body based on turn', async () => {
+      const mockBlob = new Blob(['audio'], { type: 'audio/mpeg' })
+      mockFetch.mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      })
+
+      await client.playAudio('Turn 5 text', 5)
+
+      const requestBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(requestBody.stability).toBe(0.55)
+      expect(requestBody.style).toBe(0.45)
     })
   })
 })

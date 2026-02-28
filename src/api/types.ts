@@ -48,6 +48,8 @@ export interface TTSSpeakRequest {
   text: string
   turn?: number
   voiceId?: string
+  stability?: number
+  style?: number
 }
 
 // Audio Types

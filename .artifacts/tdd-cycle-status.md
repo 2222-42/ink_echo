@@ -306,3 +306,11 @@ Tests run: 4
 Failed: 0
 Overall: PASS → ready for next
 
+
+## 2026-02-28T16:08:39+09:00
+File: src/api/elevenlabsClient.ts (getToneParams), src/App.tsx (error speech)
+Phase: GREEN
+Tests run: 6
+Failed: 0
+Overall: PASS → ready for next
+

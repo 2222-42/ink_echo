@@ -42,14 +42,22 @@ function App() {
         await playText(response.content, turns + 1)
       } catch (error) {
         console.error('Failed to get chat response:', error)
-        setErrorMessage('応答の取得に失敗しました。もう一度話しかけてください。')
+        setErrorMessage('もう一度話しかけてください。')
+        // Error speech feedback per spec [error_speech.spec.md AC-2]
+        try { await playText('今ちょっと混んでるみたい。もう一度話しかけて。', 1) } catch { /* ignore */ }
       } finally {
         setIsProcessing(false)
       }
     },
-    onError: (error) => {
+    onError: async (error) => {
       console.error('Audio error:', error)
-      setErrorMessage('音声入力でエラーが発生しました。')
+      if (error.message === 'not-allowed') {
+        // STT permission denied — play mic prompt [error_speech.spec.md AC-1]
+        setErrorMessage('マイクを許可してください。')
+        try { await playText('マイクを許可してください。ブラウザの設定を確認してください。', 1) } catch { /* ignore */ }
+      } else {
+        setErrorMessage('音声入力でエラーが発生しました。')
+      }
     }
   })
 
