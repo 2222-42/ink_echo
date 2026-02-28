@@ -30,6 +30,7 @@ describe('App Integration', () => {
             addMessage: vi.fn(),
             startUploadMode: vi.fn(),
             resumeSessionWithVision: vi.fn(),
+            resetSession: vi.fn(),
         }
         vi.mocked(useConversation).mockReturnValue(mockUseConversation)
 
@@ -122,7 +123,7 @@ describe('App Integration', () => {
                 mockUseConversation.isSessionEnded = false
                 mockUseConversation.isWaitingVision = true
             })
-            
+
             vi.mocked(mistralClient.vision).mockResolvedValue({
                 text: 'some test text',
                 themes: [],
@@ -137,7 +138,7 @@ describe('App Integration', () => {
             // Click the upload button to show the upload area
             const uploadButton = screen.getByRole('button', { name: /upload/i })
             fireEvent.click(uploadButton)
-            
+
             // Manually trigger state update by rerendering with updated mock
             vi.mocked(useConversation).mockReturnValue({
                 ...mockUseConversation,
@@ -169,7 +170,35 @@ describe('App Integration', () => {
                 expect(mockUseAudio.playText).toHaveBeenCalledWith('Great reflection!', 1)
             })
         })
+
+        it('shows "Start a new session" button on upload failure and handles reset', async () => {
+            mockUseConversation.turns = 7
+            mockUseConversation.isSessionEnded = false
+            mockUseConversation.isWaitingVision = true
+
+            // Render App in upload mode
+            render(<App />)
+
+            // Setup a fake error message in the component state by simulating a failed upload
+            vi.mocked(mistralClient.vision).mockRejectedValue(new Error('Vision API Error'))
+            const fileInput = screen.getByTestId('upload-input')
+            const file = new File(['dummy content'], 'test.png', { type: 'image/png' })
+            fireEvent.change(fileInput, { target: { files: [file] } })
+
+            // Wait for the error message and the reset button to appear
+            await waitFor(() => {
+                expect(screen.getByText(/Start a new session/i)).toBeInTheDocument()
+            })
+
+            // Click the reset button
+            const resetButton = screen.getByText(/Start a new session/i)
+            fireEvent.click(resetButton)
+
+            // Verify resetSession was called
+            expect(mockUseConversation.resetSession).toHaveBeenCalled()
+        })
     })
+
     describe('Error Speech Feedback', () => {
         it('plays mic permission message when STT is not-allowed', async () => {
             render(<App />)
