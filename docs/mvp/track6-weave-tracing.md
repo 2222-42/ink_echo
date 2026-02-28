@@ -93,6 +93,25 @@ try {
 }
 ```
 
+**Memory Management:**
+
+The MockTraceLogger includes automatic cleanup to prevent memory leaks:
+- Traces older than 5 minutes are automatically removed
+- Maximum of 1000 traces are kept at any time
+- Cleanup runs every 60 seconds
+
+For long-running applications or when creating custom logger instances, you can manually clean up:
+
+```typescript
+import { MockTraceLogger } from '../lib/tracing'
+
+const logger = new MockTraceLogger()
+// Use logger...
+
+// When done (e.g., on component unmount):
+logger.destroy() // Clears timer and all traces
+```
+
 **Current Integration:**
 
 Tracing is integrated into API clients:

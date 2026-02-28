@@ -41,12 +41,25 @@ class MockTraceLogger implements TraceLogger {
   private traces: Map<string, Partial<TraceMetadata>> = new Map()
   private readonly MAX_TRACES = 1000 // Limit traces to prevent memory leaks
   private readonly CLEANUP_INTERVAL = 60000 // Cleanup old traces every 60 seconds
+  private cleanupTimer?: ReturnType<typeof setInterval>
 
   constructor() {
     // Periodically clean up old traces to prevent memory leaks
     if (typeof setInterval !== 'undefined') {
-      setInterval(() => this.cleanup(), this.CLEANUP_INTERVAL)
+      this.cleanupTimer = setInterval(() => this.cleanup(), this.CLEANUP_INTERVAL)
     }
+  }
+
+  /**
+   * Cleanup method to stop the timer and clear traces
+   * Call this when the logger is no longer needed (e.g., on component unmount)
+   */
+  destroy(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer)
+      this.cleanupTimer = undefined
+    }
+    this.traces.clear()
   }
 
   private cleanup(): void {

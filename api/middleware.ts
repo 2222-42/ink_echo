@@ -3,6 +3,11 @@ import { API_CONFIG, type ApiErrorResponse } from './config.js'
 import { generateTraceId, logTrace, type TraceMetadata } from './tracing.js'
 import dns from 'node:dns'
 
+// Extended VercelRequest with tracing support
+interface TracedVercelRequest extends VercelRequest {
+  traceId?: string
+}
+
 // Workaround for Node.js >= 18 fetch EAI_AGAIN local IPv6 issues
 try {
   dns.setDefaultResultOrder('ipv4first')
@@ -93,16 +98,16 @@ export function withRequestValidation(handler: (req: VercelRequest, res: VercelR
 }
 
 // Middleware to trace API requests for W&B Weave integration
-// NOTE: This middleware only traces responses that use res.json().
-// For responses using res.send(), res.end(), or streaming, additional
-// instrumentation may be needed.
+// NOTE: This middleware intercepts both res.json() and res.end() to capture
+// all response types. Streaming responses are also traced when they call res.end().
 export function withTracing(handler: (req: VercelRequest, res: VercelResponse) => void | Promise<void>) {
   return async (req: VercelRequest, res: VercelResponse) => {
     const traceId = generateTraceId()
     const startTime = Date.now()
     
     // Add trace ID to request for downstream use
-    ;(req as VercelRequest & { traceId?: string }).traceId = traceId
+    const tracedReq = req as TracedVercelRequest
+    tracedReq.traceId = traceId
 
     // Log trace start
     const startMetadata: TraceMetadata = {
