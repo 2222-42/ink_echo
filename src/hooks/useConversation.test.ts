@@ -144,4 +144,36 @@ describe('useConversation', () => {
         expect(result.current.isWaitingVision).toBe(true)
         expect(result.current.turns).toBe(7) // turns should not change
     })
+
+    it('resets the session completely and generates a new UUID when resetSession is called', () => {
+        vi.spyOn(localStorageImpl, 'getSession').mockReturnValue({
+            id: 'old-uuid',
+            turns: 7,
+            history: [{ role: 'user', content: 'hello' }],
+            isSessionEnded: true,
+            isWaitingVision: true
+        })
+
+        const { result } = renderHook(() => useConversation())
+
+        expect(result.current.id).toBe('old-uuid')
+        expect(result.current.turns).toBe(7)
+        expect(result.current.isSessionEnded).toBe(true)
+
+        // Reset the mock to return a new UUID for the reset
+        vi.unstubAllGlobals()
+        vi.stubGlobal('crypto', {
+            randomUUID: () => 'new-uuid-5678'
+        } as unknown as Crypto)
+
+        act(() => {
+            (result.current as any).resetSession();
+        })
+
+        expect(result.current.id).toBe('new-uuid-5678')
+        expect(result.current.turns).toBe(0)
+        expect(result.current.history).toEqual([])
+        expect(result.current.isSessionEnded).toBe(false)
+        expect(result.current.isWaitingVision).toBe(false)
+    })
 })

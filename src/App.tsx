@@ -18,7 +18,8 @@ function App() {
     isWaitingVision,
     addMessage,
     startUploadMode,
-    resumeSessionWithVision
+    resumeSessionWithVision,
+    resetSession
   } = useConversation()
 
   // Fix 2: loading and error state
@@ -85,25 +86,25 @@ function App() {
         await playText(visionResponse.feedback, 1)
       } catch (error) {
         console.error('Vision API error:', error)
-        
+
         // Check if fallback mode is enabled
         const useFallback = isFeatureEnabled('ENABLE_VISION_FALLBACK')
-        
+
         if (!useFallback) {
           // Default behavior: Show honest error message and prompt retry
           const honestErrorAudio = getHonestErrorMessage(history)
           const honestErrorUI = getHonestErrorUIMessage(history)
-          
+
           // Set UI error message
           setErrorMessage(honestErrorUI)
-          
+
           // Play audio feedback with honest error message
           try {
             await playText(honestErrorAudio, 1)
           } catch (audioError) {
             console.error('Failed to play error message:', audioError)
           }
-          
+
           // Track honest error metric
           console.log('[Metrics] vision_failure_honest')
         }
@@ -175,7 +176,18 @@ function App() {
               Analyzing image…
             </div>
           ) : (
-            <UploadArea onImageSelect={handleUpload} />
+            <div className="flex flex-col items-center gap-4">
+              <UploadArea onImageSelect={handleUpload} />
+              <button
+                onClick={() => {
+                  setErrorMessage(null);
+                  resetSession();
+                }}
+                className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-4"
+              >
+                Start a new session
+              </button>
+            </div>
           )}
         </div>
       )}

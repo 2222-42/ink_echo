@@ -91,10 +91,21 @@ export const useConversation = () => {
         });
     };
 
+    const resetSession = () => {
+        setState({
+            id: crypto.randomUUID(),
+            turns: 0,
+            history: [],
+            isSessionEnded: false,
+            isWaitingVision: false,
+        });
+    };
+
     return {
         ...state,
         addMessage,
         startUploadMode,
-        resumeSessionWithVision
+        resumeSessionWithVision,
+        resetSession
     };
 };

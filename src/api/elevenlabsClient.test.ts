@@ -11,11 +11,17 @@ describe('ElevenLabsClient', () => {
     mockFetch = vi.fn()
     global.fetch = mockFetch
 
-    // Mock Audio constructor
-    global.Audio = vi.fn().mockImplementation(() => ({
-      play: vi.fn().mockResolvedValue(undefined),
-      src: '',
-    }))
+    // Mock Audio properly for `new Audio()` checks
+    global.Audio = class {
+      src: string;
+      play: vi.Mock;
+      constructor(src: string) {
+        this.src = src;
+        this.play = vi.fn().mockResolvedValue(undefined);
+      }
+    } as any
+
+    vi.spyOn(global, 'Audio')
 
     // Mock URL methods
     global.URL.createObjectURL = vi.fn(() => 'mock-audio-url')
@@ -93,7 +99,8 @@ describe('ElevenLabsClient', () => {
 
       expect(mockFetch).toHaveBeenCalled()
       expect(global.Audio).toHaveBeenCalledWith('mock-audio-url')
-      expect(global.Audio.mock.results[0].value.play).toHaveBeenCalled()
+      const mockAudioInstance = vi.mocked(global.Audio).mock.results[0].value
+      expect(mockAudioInstance.play).toHaveBeenCalled()
     })
 
     it('should handle errors during playback', async () => {
