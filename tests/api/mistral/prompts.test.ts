@@ -39,19 +39,21 @@ describe('Mistral API Prompts', () => {
             expect(promptTurn5).not.toContain('physical card right now')
         })
 
-        it('should append the behavior-forcing question instruction for turn 7', () => {
+        it('should return the completely isolated prompt for turn 7', () => {
             const promptTurn7 = getSystemPrompt('chat', 7)
 
-            expect(promptTurn7).toContain('physical card right now')
-            expect(promptTurn7).toContain('behavior-forcing question')
+            expect(promptTurn7).toContain('This is the final turn. Do NOT ask a question.')
+            // Verify it DOES NOT contain the standard 2-sentence requirement
+            expect(promptTurn7).not.toContain('exactly TWO sentences')
         })
 
-        it('should append the terminal edge case instruction for turn 8+', () => {
+        it('should return the terminal edge case instruction for turn 8+', () => {
             const promptTurn8 = getSystemPrompt('chat', 8)
             const promptTurn10 = getSystemPrompt('chat', 10)
 
             expect(promptTurn8).toContain('The session has ended')
             expect(promptTurn10).toContain('The session has ended')
+            expect(promptTurn8).not.toContain('exactly TWO sentences')
         })
     })
 })

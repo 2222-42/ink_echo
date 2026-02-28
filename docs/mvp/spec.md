@@ -80,4 +80,5 @@
 - <a id="SPEC-37"></a>**[SPEC-37]** Weights & Biases Weaveを活用し、Trace・Evaluation・Prompt最適化ループを実現可能とする。MCP利用時はMistral API呼び出しのトレースや評価メトリクス（満足度・行動変容率）の追跡を考慮する *(要件: [REQ-36](./requirements.md#REQ-36), [REQ-38](./requirements.md#REQ-38))*
 - <a id="SPEC-38"></a>**[SPEC-38]** 改善対象は「問い返しの深さ」「主体性促進度」「声トーン適合度」等とし、Weave Evaluationsを用いた自動評価やプロンプト最適化を想定する *(要件: [REQ-38](./requirements.md#REQ-38))*
 - <a id="SPEC-39"></a>**[SPEC-39]** ユーザー体験への還元として、Weaveダッシュボードの可視化と連動した音声メタフィードバック（「君の声が…」等）を想定する *(要件: [REQ-39](./requirements.md#REQ-39))*
-- <a id="SPEC-40"></a>**[SPEC-40]** 将来的にMCPサーバーとしてツール公開する際は、プロジェクトをW&Bアカウントにリンクし、Weave統合を必須として全機能呼び出しを自動トレース・ハッカソン審査基準に基づく最適化を行う *(要件: [REQ-40](./requirements.md#REQ-40), [REQ-41](./requirements.md#REQ-41))*
+- <a id="SPEC-40"></a>**[SPEC-40]** 将来的にMCPサーバーとしてツール公開する際は、プロジェクトをW&Bアカウントにリンクし、Weave統合を必須として全機能呼び出しを自動トレース・ハッカソン審査基準に基づく最適化を行う *(要件: [REQ-40](./requirements.md#REQ-40), [REQ-41](./requirements.md#REQ-41))*## Note on Turn 7 Behavior
+At turn 7, the requirement to end with a question (`[SPEC-08]`) is explicitly overridden by the requirement to force physical recording (`[SPEC-12]`). The AI will provide a firm instruction without a trailing question.
