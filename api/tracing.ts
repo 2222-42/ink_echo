@@ -19,7 +19,7 @@ export interface TraceMetadata {
   /** Error message if request failed */
   error?: string
   /** Additional custom metadata */
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 /**

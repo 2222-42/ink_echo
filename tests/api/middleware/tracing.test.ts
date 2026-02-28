@@ -4,8 +4,13 @@ import { withTracing } from '../../../api/middleware.js'
 
 describe('withTracing middleware', () => {
   let mockRequest: VercelRequest
-  let mockResponse: any
-  let mockHandler: any
+  let mockResponse: {
+    status: ReturnType<typeof vi.fn>
+    json: ReturnType<typeof vi.fn>
+    setHeader: ReturnType<typeof vi.fn>
+    statusCode: number
+  }
+  let mockHandler: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     // Reset mocks
@@ -36,17 +41,17 @@ describe('withTracing middleware', () => {
 
   it('should add traceId to request', async () => {
     const tracedHandler = withTracing(mockHandler)
-    await tracedHandler(mockRequest, mockResponse)
+    await tracedHandler(mockRequest, mockResponse as unknown as VercelResponse)
     
-    expect((mockRequest as any).traceId).toBeDefined()
-    expect((mockRequest as any).traceId).toMatch(/^trace_\d+_[a-z0-9]+$/)
+    expect((mockRequest as VercelRequest & { traceId?: string }).traceId).toBeDefined()
+    expect((mockRequest as VercelRequest & { traceId?: string }).traceId).toMatch(/^trace_\d+_[a-z0-9]+$/)
   })
 
   it('should log trace metadata on request start', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
     
     const tracedHandler = withTracing(mockHandler)
-    await tracedHandler(mockRequest, mockResponse)
+    await tracedHandler(mockRequest, mockResponse as unknown as VercelResponse)
     
     // Should log trace start with method and path
     expect(consoleSpy).toHaveBeenCalledWith('[TRACE]', expect.stringContaining('POST'))
@@ -59,7 +64,7 @@ describe('withTracing middleware', () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
     
     const tracedHandler = withTracing(mockHandler)
-    await tracedHandler(mockRequest, mockResponse)
+    await tracedHandler(mockRequest, mockResponse as unknown as VercelResponse)
     
     // Should log trace end with duration and status
     expect(consoleSpy).toHaveBeenCalledWith('[TRACE]', expect.stringContaining('durationMs'))
@@ -70,10 +75,9 @@ describe('withTracing middleware', () => {
 
   it('should intercept response.json to log metadata', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    const originalJsonMock = mockResponse.json
     
     const tracedHandler = withTracing(mockHandler)
-    await tracedHandler(mockRequest, mockResponse)
+    await tracedHandler(mockRequest, mockResponse as unknown as VercelResponse)
     
     // Verify that trace metadata was logged (the middleware intercepts json)
     expect(consoleSpy).toHaveBeenCalledWith('[TRACE]', expect.stringContaining('statusCode'))
@@ -89,7 +93,7 @@ describe('withTracing middleware', () => {
     
     const tracedHandler = withTracing(errorHandler)
     
-    await expect(tracedHandler(mockRequest, mockResponse)).rejects.toThrow('Test error')
+    await expect(tracedHandler(mockRequest, mockResponse as unknown as VercelResponse)).rejects.toThrow('Test error')
     
     // Should log error trace
     expect(consoleSpy).toHaveBeenCalledWith('[TRACE]', expect.stringContaining('Test error'))
@@ -106,7 +110,7 @@ describe('withTracing middleware', () => {
     })
     
     const tracedHandler = withTracing(mockHandler)
-    await tracedHandler(mockRequest, mockResponse)
+    await tracedHandler(mockRequest, mockResponse as unknown as VercelResponse)
     
     // Should log metadata with success flag
     const logCalls = consoleSpy.mock.calls
@@ -130,7 +134,7 @@ describe('withTracing middleware', () => {
     })
     
     const tracedHandler = withTracing(mockHandler)
-    await tracedHandler(mockRequest, mockResponse)
+    await tracedHandler(mockRequest, mockResponse as unknown as VercelResponse)
     
     // Find the trace log with duration
     const logCalls = consoleSpy.mock.calls

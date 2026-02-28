@@ -99,7 +99,7 @@ export function withTracing(handler: (req: VercelRequest, res: VercelResponse) =
     const startTime = Date.now()
     
     // Add trace ID to request for downstream use
-    ;(req as any).traceId = traceId
+    ;(req as VercelRequest & { traceId?: string }).traceId = traceId
 
     // Log trace start
     const startMetadata: TraceMetadata = {
@@ -112,7 +112,7 @@ export function withTracing(handler: (req: VercelRequest, res: VercelResponse) =
 
     // Store original json method to intercept response
     const originalJson = res.json.bind(res)
-    res.json = function (body: any) {
+    res.json = function (body: unknown) {
       const durationMs = Date.now() - startTime
       const endMetadata: TraceMetadata = {
         traceId,
@@ -122,13 +122,13 @@ export function withTracing(handler: (req: VercelRequest, res: VercelResponse) =
         durationMs,
         statusCode: res.statusCode,
         metadata: {
-          success: body?.success,
-          hasError: !!body?.error,
+          success: (body as { success?: boolean })?.success,
+          hasError: !!(body as { error?: string })?.error,
         },
       }
       logTrace(endMetadata)
       return originalJson(body)
-    } as any
+    } as typeof res.json
 
     try {
       await handler(req, res)
