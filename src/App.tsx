@@ -139,7 +139,11 @@ function App() {
           <EndMessageOverlay
             isVisible={true}
             message="Your 7 turns are complete. Please upload a photo of your handwritten reflection."
-            onRestart={() => { }}
+            onRestart={() => {
+              // Reset conversation state to allow new upload
+              localStorageImpl.removeSession('ink-echo-session');
+              window.location.reload();
+            }}
           />
           <div className="w-full">
             {isUploading ? (
