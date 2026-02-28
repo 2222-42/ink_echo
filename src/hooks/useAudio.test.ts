@@ -6,7 +6,7 @@ import { useAudio } from './useAudio'
  * ACCEPTANCE_CRITERIA
  * 
  * 1. Web Speech API should correctly capture final transcripts and only trigger onTranscript for final results.
- * 2. It should trigger onTranscript with the remaining interim transcript when manually stopped via stopRecording().
+ * 2. It should NOT trigger onTranscript manually via stopRecording() to prevent duplicate submissions, relying on the API's natural final result.
  * 3. The SpeechRecognition instance should correctly restart when it ends, without picking up a stale state.isRecording closure.
  * 4. It should silently retry on a 'network' error to handle transient connection issues.
  * 5. It should notify onError on non-network errors.
@@ -80,7 +80,7 @@ describe('useAudio', () => {
         expect(onTranscript).toHaveBeenCalledWith('hello world')
     })
 
-    it('triggers onTranscript with remaining transcript when manually stopped', () => {
+    it('does NOT trigger onTranscript with remaining transcript when manually stopped', () => {
         const onTranscript = vi.fn()
         const { result } = renderHook(() => useAudio({ onTranscript }))
 
@@ -106,8 +106,9 @@ describe('useAudio', () => {
             expect(returned).toBe('pending text')
         })
 
-        // Expect onTranscript to have been called with the pending text
-        expect(onTranscript).toHaveBeenCalledWith('pending text')
+        // Expect onTranscript NOT to have been called with the pending text,
+        // relying on the API's natural onresult to finalize it
+        expect(onTranscript).not.toHaveBeenCalled()
     })
 
     it('restarts recognition via onend using fresh state', () => {
