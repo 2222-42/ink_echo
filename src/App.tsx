@@ -42,9 +42,9 @@ function App() {
         await playText(response.content, turns + 1)
       } catch (error) {
         console.error('Failed to get chat response:', error)
-        setErrorMessage('もう一度話しかけてください。')
+        setErrorMessage('Please try speaking again.')
         // Error speech feedback per spec [error_speech.spec.md AC-2]
-        try { await playText('今ちょっと混んでるみたい。もう一度話しかけて。', 1) } catch { /* ignore */ }
+        try { await playText('Things seem a bit busy right now. Please try talking to me again.', 1) } catch { /* ignore */ }
       } finally {
         setIsProcessing(false)
       }
@@ -53,10 +53,10 @@ function App() {
       console.error('Audio error:', error)
       if (error.message === 'not-allowed') {
         // STT permission denied — play mic prompt [error_speech.spec.md AC-1]
-        setErrorMessage('マイクを許可してください。')
-        try { await playText('マイクを許可してください。ブラウザの設定を確認してください。', 1) } catch { /* ignore */ }
+        setErrorMessage('Please allow microphone access.')
+        try { await playText('Please allow microphone access and check your browser settings.', 1) } catch { /* ignore */ }
       } else {
-        setErrorMessage('音声入力でエラーが発生しました。')
+        setErrorMessage('An error occurred with voice input.')
       }
     }
   })
@@ -81,7 +81,7 @@ function App() {
         await playText(visionResponse.feedback, 1)
       } catch (error) {
         console.error('Vision API error:', error)
-        setErrorMessage('画像の解析に失敗しました。もう一度アップロードしてください。')
+        setErrorMessage('Failed to analyze the image. Please try uploading again.')
       } finally {
         setIsUploading(false)
       }
@@ -117,7 +117,7 @@ function App() {
           aria-live="polite"
           className="w-full text-center text-sm text-gray-500 animate-pulse"
         >
-          考え中…
+          Thinking…
         </div>
       )}
 
@@ -138,13 +138,13 @@ function App() {
         <div className="w-full flex flex-col gap-4">
           <EndMessageOverlay
             isVisible={true}
-            message="7ターンが終了しました。手書きの振り返りをアップロードしてください"
+            message="Your 7 turns are complete. Please upload a photo of your handwritten reflection."
             onRestart={() => { }}
           />
           <div className="w-full">
             {isUploading ? (
               <div aria-live="polite" className="text-center text-sm text-gray-500 animate-pulse py-4">
-                画像を解析中…
+                Analyzing image…
               </div>
             ) : (
               <UploadArea onImageSelect={handleUpload} />

@@ -106,7 +106,7 @@ describe('App Integration', () => {
             render(<App />)
 
             // Should show end message
-            expect(screen.getByText(/7ターンが終了しました/)).toBeInTheDocument()
+            expect(screen.getByText(/Your 7 turns are complete/)).toBeInTheDocument()
             // MicButton should be disabled
             const micButton = screen.getByRole('button', { name: /Start recording/i })
             expect(micButton).toBeDisabled()
@@ -166,7 +166,7 @@ describe('App Integration', () => {
 
             await waitFor(() => {
                 expect(mockUseAudio.playText).toHaveBeenCalledWith(
-                    expect.stringContaining('マイクを許可してください'),
+                    expect.stringContaining('Please allow microphone access'),
                     1
                 )
             })
@@ -184,7 +184,7 @@ describe('App Integration', () => {
 
             await waitFor(() => {
                 expect(mockUseAudio.playText).toHaveBeenCalledWith(
-                    expect.stringContaining('もう一度話しかけて'),
+                    expect.stringContaining('Please try talking to me again'),
                     1
                 )
             })
