@@ -44,12 +44,6 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // Get system prompt for vision
     const systemPrompt = getSystemPrompt('vision')
 
-    // Prepare messages for Mistral API
-    const mistralMessages = [
-      { role: 'system', content: systemPrompt },
-      ...messages,
-    ]
-
     // Call Mistral Vision API
     // Note: Mistral's vision API requires the image to be sent as a base64 encoded string
     // in the messages array with proper image URL format
