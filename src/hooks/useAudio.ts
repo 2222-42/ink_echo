@@ -125,13 +125,13 @@ export function useAudio(options: UseAudioOptions = {}) {
         transcriptBufferRef.current = ''
 
         // Handle spurious network errors by retrying under the hood
-        if (event.error === 'network' && isRecordingRef.current) {
+        if (event.error === 'network') {
           if (networkErrorRetriesRef.current < 3) {
             networkErrorRetriesRef.current += 1
             console.warn(`Network error encountered, attempting to reconnect in 1s... (Retry ${networkErrorRetriesRef.current}/3)`)
             // We do NOT set isRecording: false here so the UI doesn't drop
             setTimeout(() => {
-              if (isRecordingRef.current && recognitionRef.current) {
+              if (recognitionRef.current) {
                 try {
                   recognitionRef.current.start()
                 } catch (e) { /* ignore */ }
@@ -140,11 +140,18 @@ export function useAudio(options: UseAudioOptions = {}) {
             return
           } else {
             console.error('Max network retries reached. Bailing out.')
+            setState(prev => ({ ...prev, isRecording: false, isListening: false }))
+            if (onErrorRef.current) {
+              onErrorRef.current(new Error(event.error))
+            }
+            return
           }
         }
 
         setState(prev => ({ ...prev, isRecording: false, isListening: false }))
-        onErrorRef.current?.(new Error(event.error))
+        if (onErrorRef.current) {
+          onErrorRef.current(new Error(event.error))
+        }
       }
 
       recognition.onend = () => {

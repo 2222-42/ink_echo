@@ -1,6 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { API_CONFIG, type ApiErrorResponse } from './config.js'
+import { generateTraceId, logTrace, type TraceMetadata } from './tracing.js'
 import dns from 'node:dns'
+
+// Extended VercelRequest with tracing support
+interface TracedVercelRequest extends VercelRequest {
+  traceId?: string
+}
 
 // Workaround for Node.js >= 18 fetch EAI_AGAIN local IPv6 issues
 try {
@@ -88,5 +94,90 @@ export function withRequestValidation(handler: (req: VercelRequest, res: VercelR
     }
 
     return handler(req, res)
+  }
+}
+
+// Middleware to trace API requests for W&B Weave integration
+// NOTE: This middleware intercepts both res.json() and res.end() to capture
+// all response types. Streaming responses are also traced when they call res.end().
+export function withTracing(handler: (req: VercelRequest, res: VercelResponse) => void | Promise<void>) {
+  return async (req: VercelRequest, res: VercelResponse) => {
+    const traceId = generateTraceId()
+    const startTime = Date.now()
+    
+    // Add trace ID to request for downstream use
+    const tracedReq = req as TracedVercelRequest
+    tracedReq.traceId = traceId
+
+    // Log trace start
+    const startMetadata: TraceMetadata = {
+      traceId,
+      timestamp: new Date().toISOString(),
+      method: req.method,
+      path: req.url,
+    }
+    logTrace(startMetadata)
+
+    // Store original json and end methods to intercept response
+    const originalJson = res.json.bind(res)
+    const originalEnd = res.end.bind(res)
+    let traced = false
+
+    res.json = function (body: unknown) {
+      if (!traced) {
+        const durationMs = Date.now() - startTime
+        const endMetadata: TraceMetadata = {
+          traceId,
+          timestamp: new Date().toISOString(),
+          method: req.method,
+          path: req.url,
+          durationMs,
+          statusCode: res.statusCode,
+          metadata: {
+            success: (body as { success?: boolean })?.success,
+            hasError: !!(body as { error?: string })?.error,
+          },
+        }
+        logTrace(endMetadata)
+        traced = true
+      }
+      return originalJson(body)
+    } as typeof res.json
+
+    res.end = function (...args: unknown[]) {
+      if (!traced) {
+        const durationMs = Date.now() - startTime
+        const endMetadata: TraceMetadata = {
+          traceId,
+          timestamp: new Date().toISOString(),
+          method: req.method,
+          path: req.url,
+          durationMs,
+          statusCode: res.statusCode,
+        }
+        logTrace(endMetadata)
+        traced = true
+      }
+      return originalEnd(...args)
+    } as typeof res.end
+
+    try {
+      await handler(req, res)
+    } catch (error) {
+      if (!traced) {
+        const durationMs = Date.now() - startTime
+        const errorMetadata: TraceMetadata = {
+          traceId,
+          timestamp: new Date().toISOString(),
+          method: req.method,
+          path: req.url,
+          durationMs,
+          error: error instanceof Error ? error.message : String(error),
+        }
+        logTrace(errorMetadata)
+        traced = true
+      }
+      throw error
+    }
   }
 }

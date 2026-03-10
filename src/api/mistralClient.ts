@@ -5,6 +5,7 @@ import type {
   VisionResponse,
   ApiResponse
 } from './types'
+import { traceLogger, generateTraceId } from '../lib/tracing'
 
 class MistralClient {
   private baseUrl: string
@@ -18,21 +19,36 @@ class MistralClient {
    * System prompt is injected server-side
    */
   async chat(request: ChatRequest): Promise<ChatResponse> {
-    const response = await fetch(`${this.baseUrl}/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    })
+    const traceId = generateTraceId()
+    const startTime = Date.now()
 
-    const data: ApiResponse<ChatResponse> = await response.json()
+    traceLogger.startTrace(traceId, 'POST', `${this.baseUrl}/chat`)
 
-    if (!response.ok || !data.success) {
-      throw new Error(!data.success ? data.error : 'Failed to get chat response')
+    try {
+      const response = await fetch(`${this.baseUrl}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      })
+
+      const data: ApiResponse<ChatResponse> = await response.json()
+
+      const durationMs = Date.now() - startTime
+      const status = response.ok && data.success ? 'success' : 'error'
+      // TODO: Implement streaming support for real-time trace updates
+      traceLogger.endTrace(traceId, status, durationMs)
+
+      if (!response.ok || !data.success) {
+        throw new Error(!data.success ? data.error : 'Failed to get chat response')
+      }
+
+      return data.data
+    } catch (error) {
+      traceLogger.error(traceId, error as Error)
+      throw error
     }
-
-    return data.data
   }
 
   /**
@@ -40,21 +56,35 @@ class MistralClient {
    * Returns structured analysis of handwritten content
    */
   async vision(request: VisionRequest): Promise<VisionResponse> {
-    const response = await fetch(`${this.baseUrl}/vision`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    })
+    const traceId = generateTraceId()
+    const startTime = Date.now()
 
-    const data: ApiResponse<VisionResponse> = await response.json()
+    traceLogger.startTrace(traceId, 'POST', `${this.baseUrl}/vision`)
 
-    if (!response.ok || !data.success) {
-      throw new Error(!data.success ? data.error : 'Failed to analyze image')
+    try {
+      const response = await fetch(`${this.baseUrl}/vision`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      })
+
+      const data: ApiResponse<VisionResponse> = await response.json()
+
+      const durationMs = Date.now() - startTime
+      const status = response.ok && data.success ? 'success' : 'error'
+      traceLogger.endTrace(traceId, status, durationMs)
+
+      if (!response.ok || !data.success) {
+        throw new Error(!data.success ? data.error : 'Failed to analyze image')
+      }
+
+      return data.data
+    } catch (error) {
+      traceLogger.error(traceId, error as Error)
+      throw error
     }
-
-    return data.data
   }
 }
 
